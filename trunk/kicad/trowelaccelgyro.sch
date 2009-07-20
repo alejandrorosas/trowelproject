@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Mon 25 May 2009 12:34:28 AM CEST
+EESchema Schematic File Version 2  date Thu 28 May 2009 11:31:55 PM CEST
 LIBS:power,./trowel,device,conn,linear,regul,74xx,cmos4000,adc-dac,memory,xilinx,special,microcontrollers,dsp,microchip,analog_switches,motorola,texas,intel,audio,interface,digital-audio,philips,display,cypress,siliconi,contrib,valves,./trowel.cache
 EELAYER 24  0
 EELAYER END
@@ -433,9 +433,9 @@ F 1 "10u" H 9600 5100 50  0000 L CNN
 	1    0    0    -1  
 $EndComp
 Text HLabel 7100 6500 0    60   Output ~ 0
-lis_st
+lisy_st
 Text HLabel 7100 6350 0    60   Output ~ 0
-lis_pd
+lisy_pd
 $Comp
 L VCC #PWR15
 U 1 1 4A19C381

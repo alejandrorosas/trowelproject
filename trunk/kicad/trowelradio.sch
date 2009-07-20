@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Mon 25 May 2009 12:34:28 AM CEST
+EESchema Schematic File Version 2  date Thu 28 May 2009 11:31:55 PM CEST
 LIBS:power,./trowel,device,conn,linear,regul,74xx,cmos4000,adc-dac,memory,xilinx,special,microcontrollers,dsp,microchip,analog_switches,motorola,texas,intel,audio,interface,digital-audio,philips,display,cypress,siliconi,contrib,valves,./trowel.cache
 EELAYER 24  0
 EELAYER END
