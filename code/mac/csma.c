@@ -29,13 +29,10 @@ void csma_init() {
     cc2500_gdo0_int_disable();
     cc2500_gdo2_int_disable();
     
-    rx_ready = cc2500_status_version();
-    rx_ready = cc2500_status_partnum();
-    
     rx_ready = 0;
     reset_rx();
     
-    csma_addr = (cc2500_status_rssi()<<8) + cc2500_status_rssi();
+    //~ csma_addr = (cc2500_status_rssi()<<8) + cc2500_status_rssi();
 }
 static uint8_t tx_fifo_bytes;
 
@@ -45,20 +42,20 @@ int csma_send(uint16_t dest_addr, uint8_t* data, int len) {
         return 0;
     }
     
-    tx_fifo_bytes = cc2500_status_txbytes();
+    tx_fifo_bytes = cc2500_read_reg(CC2500_REG_TXBYTES);
     
     tx_len = len + 5;
-    cc2500_fifo_put(&tx_len, 1);
-    cc2500_fifo_put((uint8_t*)&csma_addr, 2);
-    cc2500_fifo_put((uint8_t*)&dest_addr, 2);
-    cc2500_fifo_put(data, len);
+    cc2500_write_fifo(&tx_len, 1);
+    cc2500_write_fifo((uint8_t*)&csma_addr, 2);
+    cc2500_write_fifo((uint8_t*)&dest_addr, 2);
+    cc2500_write_fifo(data, len);
     
-    tx_fifo_bytes = cc2500_status_txbytes();
+    tx_fifo_bytes = cc2500_read_reg(CC2500_REG_TXBYTES);
     
-    cc2500_gdo0_register_callback(tx_cb);
-    cc2500_cmd_tx();
+    cc2500_gdo0_int_set_cb(tx_cb);
+    cc2500_cmd_strobe(CC2500_STROBE_STX);
     
-    if ( (cc2500_status() & 0x60) == 0 ) {
+    if ( (cc2500_cmd_strobe(CC2500_STROBE_SNOP) & 0x60) == 0 ) {
         return 0;
     }
     
@@ -91,49 +88,42 @@ void csma_set_tx_cb(int (*cb) (void)) {
 }
 
 static void reset_rx() {
-    cc2500_cmd_idle();
-    cc2500_cmd_flush_rx();
-    cc2500_cmd_calibrate();
-    
-    cc2500_cfg_gdo0(CC2500_GDOx_SYNC_WORD);
-    cc2500_gdo0_register_callback(rx_cb);
-    cc2500_gdo0_int_set_falling_edge();
-    cc2500_gdo0_int_clear();
-    cc2500_gdo0_int_enable();
-    
-    cc2500_cfg_gdo2(CC2500_GDOx_RX_OVER);
-    cc2500_gdo2_register_callback(fifo_cb);
-    cc2500_gdo2_int_set_rising_edge();
-    cc2500_gdo2_int_clear();
-    cc2500_gdo2_int_enable();
-    
-    cc2500_cmd_rx();
+  cc2500_cmd_strobe(CC2500_STROBE_SIDLE);
+  cc2500_cmd_strobe(CC2500_STROBE_SFRX);
+  cc2500_cmd_strobe(CC2500_STROBE_SCAL);
+  
+  cc2500_gdo0_int_clear();
+  cc2500_gdo0_int_set_falling();
+  cc2500_gdo0_int_enable();
+  cc2500_gdo0_int_set_cb(rx_cb);
+  
+  cc2500_cmd_strobe(CC2500_STROBE_SRX);
 }
 
 
 static int rx_cb() {
-    if (! (cc2500_status_crc_lqi() & 0x80) ) {
-        reset_rx();
-        return 0;
-    }
-    
-    uint8_t len;
-    cc2500_fifo_get(&len, 1);
-    if (len > 63) {
-        reset_rx();
-        return 0;
-    }
-    
-    rx_msg.len = len;
-    
-    cc2500_fifo_get((uint8_t*)&rx_msg.src, rx_msg.len);
-    rx_ready = 1;
-    
-    if (csma_rx_cb) {
-        return csma_rx_cb();
-    }
-    
-    reset_rx();
+    //~ if (! (cc2500_status_crc_lqi() & 0x80) ) {
+        //~ reset_rx();
+        //~ return 0;
+    //~ }
+    //~ 
+    //~ uint8_t len;
+    //~ cc2500_fifo_get(&len, 1);
+    //~ if (len > 63) {
+        //~ reset_rx();
+        //~ return 0;
+    //~ }
+    //~ 
+    //~ rx_msg.len = len;
+    //~ 
+    //~ cc2500_fifo_get((uint8_t*)&rx_msg.src, rx_msg.len);
+    //~ rx_ready = 1;
+    //~ 
+    //~ if (csma_rx_cb) {
+        //~ return csma_rx_cb();
+    //~ }
+    //~ 
+    //~ reset_rx();
     
     return 0;
 }
