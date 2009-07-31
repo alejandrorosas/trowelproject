@@ -1,9 +1,10 @@
 # makfile configuration
-NAME            = radio
+NAME            = csma
 CPU             = msp430x2274
 
-DRIVERS		= ../drivers
-INCLUDES 	= -I${DRIVERS}
+DRIVERS		= ../../drivers
+MAC		= ../../mac
+INCLUDES 	= -I${DRIVERS} -I${MAC}
 CFLAGS          = -mmcu=${CPU} -O2 -Wall -g ${INCLUDES}
 CC              = msp430-gcc
 
@@ -11,7 +12,9 @@ SRC 	= main.c \
 	${DRIVERS}/clock.c \
 	${DRIVERS}/leds.c \
 	${DRIVERS}/usci.c \
-	${DRIVERS}/cc2500.c 
+	${DRIVERS}/timer.c \
+	${DRIVERS}/cc2500.c \
+	${MAC}/csma.c
 
 OBJECTS = $(SRC:.c=.o)
 

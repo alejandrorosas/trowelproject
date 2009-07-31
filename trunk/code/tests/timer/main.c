@@ -27,7 +27,7 @@ int main(void) {
     leds_init();
     leds_on(LED_RED);
     
-    timer_start(TIMER_SOURCE_SMCLK, 8); // 
+    timer_start(TIMER_SOURCE_SMCLK, 8);
     timer_register_cb(TIMER_ALARM_0, change_red);
     timer_set_alarm(TIMER_ALARM_0, 0, 15625, TIMER_MODE_FROM_NOW, 0);
     timer_register_cb(TIMER_ALARM_1, change_green);
