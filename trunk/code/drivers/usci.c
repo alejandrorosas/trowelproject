@@ -8,43 +8,33 @@
   #define NULL 0x0
 #endif
 
-#define RADIO_SELECT() P3OUT &= ~1
-#define RADIO_DESELECT() P3OUT |= 1
-
 uint8_t spi_last_read;
+static uint8_t data_test=0;
 
 void spi_init(void) {
-    // configure P3.0 IO for radio chip select
-    P3SEL &= ~1; // set IO
-    P3DIR &= ~1; // set output
-    RADIO_DESELECT(); // default deselect;
-    
-    // configure P3.1 P3.2 P3.3 for SPI
-    P3SEL |= (1<<1) | (1<<2) | (1<<3);
-    
-    // set UCSWRST (reset)
-    UCB0CTL1 = UCSWRST;
-    
-    // initialize all registers
-    UCB0CTL0 = UCCKPH | UCMSB | UCMST | UCMODE_0 | UCSYNC;
-    UCB0CTL1 = UCSSEL_SMCLK | UCSWRST;
-    UCB0BR0 = 2;
-    UCB0BR1 = 0;
-    UCB0STAT = 0;
-    
-    // disable interrupts
-    IE2 &= ~(UCB0TXIE | UCB0RXIE);
-    
-    // clear UCSWRST
-    UCB0CTL1 &= ~UCSWRST;
-}
+  
+  /* configure all SPI related pins */
+  P3DIR |= (1<<1) | (1<<3);
+  P3DIR &= ~(1<<2);
 
-void spi_radio_select(int on) {
-    // this is the radio chip select
-    if (on)
-        RADIO_SELECT();
-    else
-        RADIO_DESELECT();
+  // configure P3.0 IO for radio CSn
+  P3SEL &= ~1; // set IO
+  P3DIR |= 1; // set output
+  spi_radio_deselect();
+  
+  /* initialize the SPI registers */
+  UCB0CTL1 = UCSWRST;
+  UCB0CTL1 = UCSSEL_SMCLK | UCSWRST;
+  UCB0CTL0 = UCCKPH | UCMSB | UCMST | UCSYNC;
+  UCB0BR0  = 0x2;
+  UCB0BR1  = 0x0;
+  
+  P3SEL |= (1<<1) | (1<<2) | (1<<3);
+  
+  UCB0CTL1 &= ~UCSWRST;
+  
+  // disable interrupts
+  IE2 &= ~(UCB0TXIE | UCB0RXIE);
 }
 
 int spi_write(const uint8_t* data, int len, int (*done)(void)) {
@@ -70,10 +60,13 @@ int spi_write(const uint8_t* data, int len, int (*done)(void)) {
 }
 
 void spi_write_single(uint8_t data) {
+    data_test = 0;
     
     if ( UCB0STAT & UCBUSY )
         return;
-
+    
+    data_test = data;
+    
     UCB0TXBUF = data;
     
     // wait for RX ready
@@ -121,10 +114,6 @@ uint8_t spi_read_single(void) {
     
     // return RX data
     return UCB0RXBUF;
-}
-
-uint8_t spi_read_somi(void) {
-  return P3IN & (1<<2);
 }
 
 void uart_init(void) {

@@ -1,689 +1,127 @@
-#ifndef _CC2500_H_
-#define _CC2500_H_
+#ifndef _CC2500_H
+#define _CC2500_H
 
-// standard
-/**
- * \brief radio initialization procedure
+/* ------------------------------------------------------------------------------------------------
+ *                                          Defines
+ * ------------------------------------------------------------------------------------------------
+ */
+
+/* configuration registers */
+#define CC2500_REG_IOCFG2       0x00      /*  IOCFG2   - GDO2 output pin configuration  */
+#define CC2500_REG_IOCFG1       0x01      /*  IOCFG1   - GDO1 output pin configuration  */
+#define CC2500_REG_IOCFG0       0x02      /*  IOCFG1   - GDO0 output pin configuration  */
+#define CC2500_REG_FIFOTHR      0x03      /*  FIFOTHR  - RX FIFO and TX FIFO thresholds */
+#define CC2500_REG_SYNC1        0x04      /*  SYNC1    - Sync word, high byte */
+#define CC2500_REG_SYNC0        0x05      /*  SYNC0    - Sync word, low byte */
+#define CC2500_REG_PKTLEN       0x06      /*  PKTLEN   - Packet length */
+#define CC2500_REG_PKTCTRL1     0x07      /*  PKTCTRL1 - Packet automation control */
+#define CC2500_REG_PKTCTRL0     0x08      /*  PKTCTRL0 - Packet automation control */
+#define CC2500_REG_ADDR         0x09      /*  ADDR     - Device address */
+#define CC2500_REG_CHANNR       0x0A      /*  CHANNR   - Channel number */
+#define CC2500_REG_FSCTRL1      0x0B      /*  FSCTRL1  - Frequency synthesizer control */
+#define CC2500_REG_FSCTRL0      0x0C      /*  FSCTRL0  - Frequency synthesizer control */
+#define CC2500_REG_FREQ2        0x0D      /*  FREQ2    - Frequency control word, high byte */
+#define CC2500_REG_FREQ1        0x0E      /*  FREQ1    - Frequency control word, middle byte */
+#define CC2500_REG_FREQ0        0x0F      /*  FREQ0    - Frequency control word, low byte */
+#define CC2500_REG_MDMCFG4      0x10      /*  MDMCFG4  - Modem configuration */
+#define CC2500_REG_MDMCFG3      0x11      /*  MDMCFG3  - Modem configuration */
+#define CC2500_REG_MDMCFG2      0x12      /*  MDMCFG2  - Modem configuration */
+#define CC2500_REG_MDMCFG1      0x13      /*  MDMCFG1  - Modem configuration */
+#define CC2500_REG_MDMCFG0      0x14      /*  MDMCFG0  - Modem configuration */
+#define CC2500_REG_DEVIATN      0x15      /*  DEVIATN  - Modem deviation setting */
+#define CC2500_REG_MCSM2        0x16      /*  MCSM2    - Main Radio Control State Machine configuration */
+#define CC2500_REG_MCSM1        0x17      /*  MCSM1    - Main Radio Control State Machine configuration */
+#define CC2500_REG_MCSM0        0x18      /*  MCSM0    - Main Radio Control State Machine configuration */
+#define CC2500_REG_FOCCFG       0x19      /*  FOCCFG   - Frequency Offset Compensation configuration */
+#define CC2500_REG_BSCFG        0x1A      /*  BSCFG    - Bit Synchronization configuration */
+#define CC2500_REG_AGCCTRL2     0x1B      /*  AGCCTRL2 - AGC control */
+#define CC2500_REG_AGCCTRL1     0x1C      /*  AGCCTRL1 - AGC control */
+#define CC2500_REG_AGCCTRL0     0x1D      /*  AGCCTRL0 - AGC control */
+#define CC2500_REG_WOREVT1      0x1E      /*  WOREVT1  - High byte Event0 timeout */
+#define CC2500_REG_WOREVT0      0x1F      /*  WOREVT0  - Low byte Event0 timeout */
+#define CC2500_REG_WORCTRL      0x20      /*  WORCTRL  - Wake On Radio control */
+#define CC2500_REG_FREND1       0x21      /*  FREND1   - Front end RX configuration */
+#define CC2500_REG_FREND0       0x22      /*  FREDN0   - Front end TX configuration */
+#define CC2500_REG_FSCAL3       0x23      /*  FSCAL3   - Frequency synthesizer calibration */
+#define CC2500_REG_FSCAL2       0x24      /*  FSCAL2   - Frequency synthesizer calibration */
+#define CC2500_REG_FSCAL1       0x25      /*  FSCAL1   - Frequency synthesizer calibration */
+#define CC2500_REG_FSCAL0       0x26      /*  FSCAL0   - Frequency synthesizer calibration */
+#define CC2500_REG_RCCTRL1      0x27      /*  RCCTRL1  - RC oscillator configuration */
+#define CC2500_REG_RCCTRL0      0x28      /*  RCCTRL0  - RC oscillator configuration */
+#define CC2500_REG_FSTEST       0x29      /*  FSTEST   - Frequency synthesizer calibration control */
+#define CC2500_REG_PTEST        0x2A      /*  PTEST    - Production test */
+#define CC2500_REG_AGCTEST      0x2B      /*  AGCTEST  - AGC test */
+#define CC2500_REG_TEST2        0x2C      /*  TEST2    - Various test settings */
+#define CC2500_REG_TEST1        0x2D      /*  TEST1    - Various test settings */
+#define CC2500_REG_TEST0        0x2E      /*  TEST0    - Various test settings */
+
+/* status registers */
+#define CC2500_REG_PARTNUM      0x30      /*  PARTNUM    - Chip ID */
+#define CC2500_REG_VERSION      0x31      /*  VERSION    - Chip ID */
+#define CC2500_REG_FREQEST      0x32      /*  FREQEST    - Frequency Offset Estimate from demodulator */
+#define CC2500_REG_LQI          0x33      /*  LQI        - Demodulator estimate for Link Quality */
+#define CC2500_REG_RSSI         0x34      /*  RSSI       - Received signal strength indication */
+#define CC2500_REG_MARCSTATE    0x35      /*  MARCSTATE  - Main Radio Control State Machine state */
+#define CC2500_REG_WORTIME1     0x36      /*  WORTIME1   - High byte of WOR time */
+#define CC2500_REG_WORTIME0     0x37      /*  WORTIME0   - Low byte of WOR time */
+#define CC2500_REG_PKTSTATUS    0x38      /*  PKTSTATUS  - Current GDOx status and packet status */
+#define CC2500_REG_VCO_VC_DAC   0x39      /*  VCO_VC_DAC - Current setting from PLL calibration module */
+#define CC2500_REG_TXBYTES      0x3A      /*  TXBYTES    - Underflow and number of bytes */
+#define CC2500_REG_RXBYTES      0x3B      /*  RXBYTES    - Overflow and number of bytes */
+                                                                                                                                                 
+/* burst write registers */
+#define CC2500_REG_PATABLE      0x3E      /*  PATABLE - PA control settings table */
+#define CC2500_REG_TXFIFO       0x3F      /*  TXFIFO  - Transmit FIFO */
+#define CC2500_REG_RXFIFO       0x3F      /*  RXFIFO  - Receive FIFO */
+
+/* command strobe registers */
+#define CC2500_STROBE_SRES      0x30      /*  SRES    - Reset chip. */
+#define CC2500_STROBE_SFSTXON   0x31      /*  SFSTXON - Enable and calibrate frequency synthesizer. */
+#define CC2500_STROBE_SXOFF     0x32      /*  SXOFF   - Turn off crystal oscillator. */
+#define CC2500_STROBE_SCAL      0x33      /*  SCAL    - Calibrate frequency synthesizer and turn it off. */
+#define CC2500_STROBE_SRX       0x34      /*  SRX     - Enable RX. Perform calibration if enabled. */
+#define CC2500_STROBE_STX       0x35      /*  STX     - Enable TX. If in RX state, only enable TX if CCA passes. */
+#define CC2500_STROBE_SIDLE     0x36      /*  SIDLE   - Exit RX / TX, turn off frequency synthesizer. */
+#define CC2500_STROBE_SRSVD     0x37      /*  SRVSD   - Reserved.  Do not use. */
+#define CC2500_STROBE_SWOR      0x38      /*  SWOR    - Start automatic RX polling sequence (Wake-on-Radio) */
+#define CC2500_STROBE_SPWD      0x39      /*  SPWD    - Enter power down mode when CSn goes high. */
+#define CC2500_STROBE_SFRX      0x3A      /*  SFRX    - Flush the RX FIFO buffer. */
+#define CC2500_STROBE_SFTX      0x3B      /*  SFTX    - Flush the TX FIFO buffer. */
+#define CC2500_STROBE_SWORRST   0x3C      /*  SWORRST - Reset real time clock. */
+#define CC2500_STROBE_SNOP      0x3D      /*  SNOP    - No operation. Returns status byte. */
+
+
+#define CC2500_GDO0_PIN 6
+#define CC2500_GDO2_PIN 7
+/* ------------------------------------------------------------------------------------------------
+ *                                         Prototypes
+ * ------------------------------------------------------------------------------------------------
  */
 void cc2500_init(void);
 
-/**
- * \brief Re-initialize the SPI driver only
- */
-void cc2500_reinit(void);
-
-/**
- * \brief Get the CC2500 chip status
- * /return the status
- */
-uint8_t cc2500_status(void);
-
-// commands
-
-/**
- * \brief force chip to reset all registers to default state
- */
-void cc2500_cmd_reset(void);
-
-/**
- * \brief stop cristal oscillator
- */
-void cc2500_cmd_xoff(void);
-
-/**
- * \brief calibrate frequency synthetizer
- */
-void cc2500_cmd_calibrate(void);
-
-/**
- * \brief enable rx.
- */
-void cc2500_cmd_rx(void);
-
-/**
- * \brief enable tx. if in rx with cca enabled, go to tx if channel clear
- */
-void cc2500_cmd_tx(void);
-
-/**
- * \brief stop tx/rx/calibration/wor
- */
-void cc2500_cmd_idle(void);
-
-/**
- * \brief start wake-on-radio : periodic channel sampling with RX polling
- */
-void cc2500_cmd_wor(void);
-
-/**
- * \brief enter power down
- */
-void cc2500_cmd_pwd(void);
-
-/**
- * \brief flush RX FIFO
- */
-void cc2500_cmd_flush_rx(void);
-
-/**
- * \brief flush TX FIFO
- */
-void cc2500_cmd_flush_tx(void);
-
-/**
- * \brief reset real time clock to Event1 value for WOR
- */
-void cc2500_cmd_reset_wor(void);
-
-/**
- * \brief does nothing, update status byte
- */
-void cc2500_cmd_nop(void);
-
-// FIFO access
-
-/**
- * \brief copy a buffer to the radio TX FIFO
- * \param buffer a pointer to the buffer
- * \param length the number of bytes to copy
- */
-void cc2500_fifo_put(uint8_t* buffer, uint16_t length);
-
-/**
- * \brief copy the content of the radio RX FIFO to a buffer
- * \param buffer a pointer to the buffer
- * \param length the number of bytes to copy
- **/
-void cc2500_fifo_get(uint8_t* buffer, uint16_t length);
-
-
-// Power Table Config
-/**
- * \brief configure the radio chip with the given power table
- * \param table pointer to the array containing the values
- * \param length number of elements (max = 8)
- */
-void cc2500_cfg_patable(uint8_t table[], uint16_t length);
-
-/**
- * \name GDOx configuration constants
- * @{
- */
-#define CC2500_GDOx_RX_FIFO           0x00  /* assert above threshold, deassert when below         */
-#define CC2500_GDOx_RX_FIFO_EOP       0x01  /* assert above threshold or EOP, deassert when empty  */
-#define CC2500_GDOx_TX_FIFO           0x02  /* assert above threshold, deassert when below         */
-#define CC2500_GDOx_TX_THR_FULL       0x03  /* asserts TX FIFO full. De-asserts when below thr     */
-#define CC2500_GDOx_RX_OVER           0x04  /* asserts when RX overflow, deassert when flushed     */
-#define CC2500_GDOx_TX_UNDER          0x05  /* asserts when RX underflow, deassert when flushed    */
-#define CC2500_GDOx_SYNC_WORD         0x06  /* assert SYNC sent/recv, deasserts on EOP             */
-                                            /* In RX, de-assert on overflow or bad address         */
-                                            /* In TX, de-assert on underflow                       */
-#define CC2500_GDOx_RX_OK             0x07  /* assert when RX PKT with CRC ok, de-assert on 1byte  */
-                                            /* read from RX Fifo                                   */
-#define CC2500_GDOx_PREAMB_OK         0x08  /* assert when preamble quality reached : PQI/PQT ok   */
-#define CC2500_GDOx_CCA               0x09  /* Clear channel assessment. High when RSSI level is   */
-                                            /* below threshold (dependent on the current CCA_MODE) */
-
-#define CC2500_GDOx_CLK_XOSC_192      0x3F /* CLK_XOSC/192 */
-/**
- * @}
- */
-
-/**
- * \brief Configure the gdo0 output pin.
- * 
- * Example : use 0x06 for sync/eop or 0x0 for rx fifo threshold
- * \param cfg the configuration value
- */
-void cc2500_cfg_gdo0(uint8_t cfg);
-
-/**
- * \brief Configure the gdo2 output pin.
- * 
- * Example : use 0x06 for sync/eop or 0x0 for rx fifo threshold
- * \param cfg the configuration value
- */
-void cc2500_cfg_gdo2(uint8_t cfg);
-
-/**
- * \brief Set the threshold for both RX and TX FIFOs.
- * corresponding values are : 
- * 
- * value   0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 \n
- * TX     61 | 57 | 53 | 49 | 45 | 41 | 37 | 33 | 29 | 25 | 21 | 17 | 13 |  9 |  5 | 1 \n
- * RX      4 |  8 | 12 | 16 | 20 | 24 | 28 | 32 | 36 | 40 | 44 | 48 | 52 | 56 | 60 | 64
- * 
- * \param cfg the configuration value
- */
-void cc2500_cfg_fifo_thr(uint8_t cfg);
-
-/**
- * \brief Set the packet length in fixed packet length mode
- * or the maximum packet length in variable length mode
- * \param cfg the configuration value
- */
-void cc2500_cfg_packet_length(uint8_t cfg);
-
-/**
- * \brief Set the preamble quality estimator threshold
- * (values are 0-7)
- * \param cfg the configuration value
- */
-void cc2500_cfg_pqt(uint8_t cfg);
-
-/**
- * \name CRC Autoflush configuration constants
- * @{
- */
-#define CC2500_CRC_AUTOFLUSH_ENABLE  0x1
-#define CC2500_CRC_AUTOFLUSH_DISABLE 0x0
-/**
- * @}
- */
-
-/**
- * \brief enable/disable the automatic flush of RX FIFO when CRC is not OK
- * \param cfg the configuration value
- */
-void cc2500_cfg_crc_autoflush(uint8_t cfg);
-
-/**
- * \name Append status configuration constants
- * @{
- */
-#define CC2500_APPEND_STATUS_ENABLE  0x1
-#define CC2500_APPEND_STATUS_DISABLE 0x0
-/**
- * @}
- */
-
-/**
- * \brief enable/disable the appending of 2 information bytes at the end of
- * a received packet.
- * 
- * Two extra bytes need to be read from the RXFIFO if the appending is set.
- * The first contains the RSSI of the received signal, the second contains
- * the CRC result on the most significant bit, and the LQI on the 7 others.
- * \param cfg the configuration value
- */
-void cc2500_cfg_append_status(uint8_t cfg);
-
-/**
- * \name Address check configuration constants
- * @{
- */
-#define CC2500_ADDR_NO_CHECK                 0x0
-#define CC2500_ADDR_CHECK_NO_BROADCAST       0x1
-#define CC2500_ADDR_CHECK_BROADCAST_0        0x2
-#define CC2500_ADDR_CHECK_NO_BROADCAST_0_255 0x3
-/**
- * @}
- */
-
-/**
- * \brief control the address check mode
- * \param cfg the configuration value
- */
-void cc2500_cfg_adr_check(uint8_t cfg);
-
-/**
- * \name Data whitening configuration constants
- * @{
- */
-#define CC2500_DATA_WHITENING_ENABLE  0x1
-#define CC2500_DATA_WHITENING_DISABLE 0x0
-/**
- * @}
- */
-
-/**
- * \brief turn data whitening on/off
- * \param cfg the configuration value
- */
-void cc2500_cfg_white_data(uint8_t cfg);
-
-
-/**
- * \name CRC calculation configuration constants
- * @{
- */
-#define CC2500_CRC_CALCULATION_ENABLE  0x1
-#define CC2500_CRC_CALCULATION_DISABLE 0x0
-/**
- * @}
- */
-
-/**
- * \brief turn CRC calculation on/off
- * \param cfg the configuration value
- */
-void cc2500_cfg_crc_en(uint8_t cfg);
-
-/**
- * \name Packet length configuration constants
- * @{
- */
-#define CC2500_PACKET_LENGTH_FIXED    0x0
-#define CC2500_PACKET_LENGTH_VARIABLE 0x1
-#define CC2500_PACKET_LENGTH_INFINITE 0x2
-/**
- * @}
- */
-
-/**
- * \brief configure the packet length mode
- * \param cfg the configuration value
- */
-void cc2500_cfg_length_config(uint8_t cfg);
-
-/**
- * \brief Set the device address for packet filtration
- * \param cfg the configuration value
- */
-void cc2500_cfg_device_addr(uint8_t cfg);
-
-/**
- * \brief Set the channel number.
- * \param cfg the configuration value
- */
-void cc2500_cfg_chan(uint8_t cfg);
-
-/**
- * \brief Set the desired IF frequency.
- * (values are 0-31)
- * \param cfg the configuration value
- */
-void cc2500_cfg_freq_if(uint8_t cfg);
-
-/**
- * \brief Set the desired base frequency.
- * \param cfg the configuration value (22bits)
- */
-void cc2500_cfg_freq(uint32_t cfg);
-
-/**
- * \brief Set the exponent of the channel bandwidth
- * (values are 0-3)
- * \param cfg the configuration value
- */
-void cc2500_cfg_chanbw_e(uint8_t cfg);
-
-/**
- * \brief Set mantissa of the channel bandwidth
- * (values are 0-3)
- * \param cfg the configuration value
- */
-void cc2500_cfg_chanbw_m(uint8_t cfg);
-
-/**
- * \brief Set the exponent of the data symbol rate
- * (values are 0-16)
- * \param cfg the configuration value
- */
-void cc2500_cfg_drate_e(uint8_t cfg);
+uint8_t cc2500_cmd_strobe(uint8_t addr);
 
-/**
- * \brief Set the mantissa of the data symbol rate
- * (values are 0-255)
- * \param cfg the configuration value
- */
-void cc2500_cfg_drate_m(uint8_t cfg);
-
-/**
- * \name Modulation configuration constants
- * @{
- */
-#define CC2500_MODULATION_2FSK 0x00
-#define CC2500_MODULATION_GFSK 0x01
-#define CC2500_MODULATION_ASK  0x03
-#define CC2500_MODULATION_MSK  0x07
-/**
- * @}
- */
-/**
- * \brief Set the signal modulation
- * \param cfg the configuration value
- */
-void cc2500_cfg_mod_format(uint8_t cfg);
-
-/**
- * \name Manchester encoding configuration constants
- * @{
- */
-#define CC2500_MANCHESTER_ENABLE  0x1
-#define CC2500_MANCHESTER_DISABLE 0x0
-/**
- * @}
- */
-/**
- * \brief Set manchester encoding on/off
- * \param cfg the configuration value
- */
-void cc2500_cfg_manchester_en(uint8_t cfg);
-
-
-/**
- * \name Sync mode configuration constants
- * @{
- */
-#define CC2500_SYNCMODE_NO_PREAMB      0x0
-#define CC2500_SYNCMODE_15_16          0x1
-#define CC2500_SYNCMODE_16_16          0x2
-#define CC2500_SYNCMODE_30_32          0x3
-#define CC2500_SYNCMODE_NO_PREAMB_CS   0x4
-#define CC2500_SYNCMODE_15_16_CS       0x5
-#define CC2500_SYNCMODE_16_16_CS       0x6
-#define CC2500_SYNCMODE_30_32_CS       0x7
-/**
- * @}
- */
-/**
- * \brief select the sync-word qualifier mode
- * \param cfg the configuration value
- */
-void cc2500_cfg_sync_mode(uint8_t cfg);
-
-/**
- * \name FEC configuration constants
- * @{
- */
-#define CC2500_FEC_ENABLE  0x1
-#define CC2500_FEC_DISABLE 0x0
-/**
- * @}
- */
-/**
- * \brief Set forward error correction on/off
- * supported in fixed packet length mode only
- * \param cfg the configuration value
- */
-void cc2500_cfg_fec_en(uint8_t cfg);
-
-/**
- * \brief Set the minimum number of preamble bytes to be tramsitted \n
- * Setting :      0  |  1  |  2  |  3  |  4  |  5  |  6  |  7 \n
- * nb. of bytes : 2  |  3  |  4  |  6  |  8  |  12 |  16 |  24 
- * \param cfg the configuration value
- */
-void cc2500_cfg_num_preamble(uint8_t cfg);
-
-/**
- * \brief Set the channel spacing exponent
- * (values are 0-3)
- * \param cfg the configuration value
- */
-void cc2500_cfg_chanspc_e(uint8_t cfg);
-
-/**
- * \brief Set the channel spacing mantissa
- * (values are 0-255)
- * \param cfg the configuration value
- */
-void cc2500_cfg_chanspc_m(uint8_t cfg);
-
-
-/**
- * \name RC oscillator configuration constants
- * @{
- */
-#define CC2500_RX_TIME_RSSI_ENABLE  0x1
-#define CC2500_RX_TIME_RSSI_DISABLE 0x0
-/**
- * @}
- */
-/**
- * \brief Set direct RX termination based on rssi measurement
- * \param cfg the configuration value
- */
-void cc2500_cfg_rx_time_rssi(uint8_t cfg);
-
-/**
- * \brief Set timeout for syncword search in RX for WOR and normal op
- * (values are 0-7)
- * \param cfg the configuration value
- */
-void cc2500_cfg_rx_time(uint8_t cfg);
-
-/**
- * \name CCA mode configuration constants
- * @{
- */
-#define CC2500_CCA_MODE_ALWAYS      0x0
-#define CC2500_CCA_MODE_RSSI        0x1
-#define CC2500_CCA_MODE_PKT_RX      0x2
-#define CC2500_CCA_MODE_RSSI_PKT_RX 0x3
-/**
- * @}
- */
-/**
- * \brief Set the CCA mode reflected in CCA signal
- * \param cfg the configuration value
- */
-void cc2500_cfg_cca_mode(uint8_t cfg);
-
-/**
- * \name RXOFF mode configuration constants
- * @{
- */
-#define CC2500_RXOFF_MODE_IDLE     0x00
-#define CC2500_RXOFF_MODE_FSTXON   0x01 /* freq synth on, ready to Tx */
-#define CC2500_RXOFF_MODE_TX       0x02 
-#define CC2500_RXOFF_MODE_STAY_RX  0x03
-/**
- * @}
- */
-/**
- * \brief Set the behavior after a packet RX
- * \param cfg the configuration value
- */
-void cc2500_cfg_rxoff_mode(uint8_t cfg);
-
-/**
- * \name TXOFF mode configuration constants
- * @{
- */
-#define CC2500_TXOFF_MODE_IDLE     0x00
-#define CC2500_TXOFF_MODE_FSTXON   0x01 /* freq synth on, ready to Tx */
-#define CC2500_TXOFF_MODE_STAY_TX  0x02
-#define CC2500_TXOFF_MODE_RX       0x03
-/**
- * @}
- */
-/**
- * \brief Set the behavior after packet TX
- * \param cfg the configuration value
- */
-void cc2500_cfg_txoff_mode(uint8_t cfg);
-
-
-/**
- * \name Automatic calibration configuration constants
- * @{
- */
-#define CC2500_AUTOCAL_NEVER             0x00
-#define CC2500_AUTOCAL_IDLE_TO_TX_RX     0x01
-#define CC2500_AUTOCAL_TX_RX_TO_IDLE     0x02
-#define CC2500_AUTOCAL_4TH_TX_RX_TO_IDLE 0x03
-/**
- * @}
- */
-/**
- * \brief Set auto calibration policy
- * \param cfg the configuration value
- */
-void cc2500_cfg_fs_autocal(uint8_t cfg);
-
-/**
- * \brief Set the relative threshold for asserting Carrier Sense \n
- * Setting :    0     |  1  |  2   |  3 \n
- * thr     : disabled | 6dB | 10dB | 14dB \n
- * \param cfg the configuration value
- */
-void cc2500_cfg_carrier_sense_rel_thr(uint8_t cfg);
-
-/**
- * \brief Set the absolute threshold for asserting Carrier Sense
- * referenced to MAGN_TARGET \n
- * Setting :    -8    |  -7  |  -1  |       0        |  1  |   7 \n
- * thr     : disabled | -7dB | -1dB | at MAGN_TARGET | 1dB |  7dB \n
- * \param cfg the configuration value
- */
-void cc2500_cfg_carrier_sense_abs_thr(uint8_t cfg);
-
-/**
- * \brief Set event0 timeout register for WOR operation
- * \param cfg the configuration value
- */
-void cc2500_cfg_event0(uint16_t cfg);
-
-/**
- * \name RC oscillator configuration constants
- * @{
- */
-#define CC2500_RC_OSC_ENABLE  0x0
-#define CC2500_RC_OSC_DISABLE 0x1
-/**
- * @}
- */
-
-/**
- * \brief Set the RC oscillator on/off, needed by WOR
- * \param cfg the configuration value
- */
-void cc2500_cfg_rc_pd(uint8_t cfg);
-
-/**
- * \brief Set the event1 timeout register
- * \param cfg the configuration value
- */
-void cc2500_cfg_event1(uint8_t cfg);
-
-/**
- * \brief Set the WOR resolution
- * \param cfg the configuration value
- */
-void cc2500_cfg_wor_res(uint8_t cfg);
-
-/**
- * \brief select the PA power setting, index of the patable
- * \param cfg the configuration value
- */
-void cc2500_cfg_pa_power(uint8_t cfg);
-
-// Status Registers access
-/**
- * \brief read the partnum register, should be 128
- */
-uint8_t cc2500_status_partnum(void);
-/**
- * \brief read the version register, should be 3
- */
-uint8_t cc2500_status_version(void);
-/**
- * \brief read the register containing the last CRC calculation match
- * and LQI estimate
- */
-uint8_t cc2500_status_crc_lqi(void);
-
-/**
- * \brief read the RSSI
- */
-uint8_t cc2500_status_rssi(void);
+uint8_t cc2500_read_reg(uint8_t addr);
+void cc2500_write_reg(uint8_t addr, uint8_t value);
 
-/**
- * \brief read the main radio state machine state
- */
-uint8_t cc2500_status_marcstate(void);
-
-/**
- * \brief read the high byte of the WOR timer
- */
-uint8_t cc2500_status_wortime1(void);
-
-/**
- * \brief read the low byte of the WOR timer 
- */
-uint8_t cc2500_status_wortime0(void);
-
-/**
- * \brief read the packet status register
- */
-uint8_t cc2500_status_pktstatus(void);
-
-/**
- * \brief read the number of bytes in TX FIFO
- */
-uint8_t cc2500_status_txbytes(void);
+void cc2500_write_fifo(uint8_t * pWriteData, uint8_t len);
+void cc2500_read_fifo(uint8_t * pReadData, uint8_t len);
 
-/**
- * \brief read the number of bytes in RX FIFO
- */
-uint8_t cc2500_status_rxbytes(void);
+#define cc2500_gdo0_int_enable P2IE |= BV(GDO0_PIN)
+#define cc2500_gdo0_int_disable P2IE &= ~BV(GDO0_PIN)
+#define cc2500_gdo0_int_set_rising P2IES &= ~BV(GDO0_PIN)
+#define cc2500_gdo0_int_set_falling P2IES |= BV(GDO0_PIN)
+#define cc2500_gdo0_int_clear P2IFG &= ~BV(GDO0_PIN)
+void cc2500_gdo0_int_set_cb(int (*cb)(void));
 
+#define cc2500_gdo2_int_enable P2IE |= BV(GDO2_PIN)
+#define cc2500_gdo2_int_disable P2IE &= ~BV(GDO2_PIN)
+#define cc2500_gdo2_int_set_rising P2IES &= ~BV(GDO2_PIN)
+#define cc2500_gdo2_int_set_falling P2IES |= BV(GDO2_PIN)
+#define cc2500_gdo2_int_clear P2IFG &= ~BV(GDO2_PIN)
+void cc2500_gdo2_int_set_cb(int (*cb)(void));
 
-// GDOx int config & access
-/**
- * \brief enable interrupt for GDO0
- */
-void cc2500_gdo0_int_enable(void);
-/**
- * \brief disable interrupt for GDO0
- */
-void cc2500_gdo0_int_disable(void);
-/**
- * \brief clear interrupt for GDO0
- */
-void cc2500_gdo0_int_clear(void);
-/**
- * \brief configure interrupt for GDO0 on high to low transition
- */
-void cc2500_gdo0_int_set_falling_edge(void);
-/**
- * \brief configure interrupt for GDO0 on low to high transition
- */
-void cc2500_gdo0_int_set_rising_edge(void);
-/**
- * \brief read the state of GDO0
- */
-uint16_t cc2500_gdo0_read(void);
-/**
- * \brief register a callback function for GDO0 interrupt
- * \param cb a function pointer
- */
-void cc2500_gdo0_register_callback(int (*cb)(void));
 
-/**
- * \brief enable interrupt for GDO2
- */
-void cc2500_gdo2_int_enable(void);
-/**
- * \brief disable interrupt for GDO2
+/**************************************************************************************************
  */
-void cc2500_gdo2_int_disable(void);
-/**
- * \brief clear interrupt for GDO2
- */
-void cc2500_gdo2_int_clear(void);
-/**
- * \brief configure interrupt for GDO2 on high to low transition
- */
-void cc2500_gdo2_int_set_falling_edge(void);
-/**
- * \brief configure interrupt for GDO2 on low to high transition
- */
-void cc2500_gdo2_int_set_rising_edge(void);
-/**
- * \brief read the state of GDO2
- */
-uint16_t cc2500_gdo2_read(void);
-/**
- * \brief register a callback function for GDO2 interrupt
- * \param cb a function pointer
- */
-void cc2500_gdo2_register_callback(int (*cb)(void));
-
 #endif
-
-/**
- * @}
- */
