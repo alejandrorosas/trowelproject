@@ -2,7 +2,7 @@
 NAME            = leds
 CPU             = msp430x2274
 
-DRIVERS		= ../drivers
+DRIVERS		= ../../drivers
 INCLUDES 	= -I${DRIVERS}
 CFLAGS          = -mmcu=${CPU} -O2 -Wall -g ${INCLUDES}
 CC              = msp430-gcc
