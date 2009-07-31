@@ -28,9 +28,9 @@ void spi_init(void) {
     // initialize all registers
     UCB0CTL0 = UCCKPH | UCMSB | UCMST | UCMODE_0 | UCSYNC;
     UCB0CTL1 = UCSSEL_SMCLK | UCSWRST;
-    UCB0BR0 = 1;
+    UCB0BR0 = 2;
     UCB0BR1 = 0;
-    UCB0STAT = UCLISTEN;
+    UCB0STAT = 0;
     
     // disable interrupts
     IE2 &= ~(UCB0TXIE | UCB0RXIE);
@@ -39,7 +39,7 @@ void spi_init(void) {
     UCB0CTL1 &= ~UCSWRST;
 }
 
-void spi_select(int on) {
+void spi_radio_select(int on) {
     // this is the radio chip select
     if (on)
         RADIO_SELECT();
@@ -121,6 +121,10 @@ uint8_t spi_read_single(void) {
     
     // return RX data
     return UCB0RXBUF;
+}
+
+uint8_t spi_read_somi(void) {
+  return P3IN & (1<<2);
 }
 
 void uart_init(void) {

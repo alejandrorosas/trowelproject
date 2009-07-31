@@ -16,7 +16,7 @@ void cc2500_reinit(void);
  * \brief Get the CC2500 chip status
  * /return the status
  */
-uint16_t cc2500_status(void);
+uint8_t cc2500_status(void);
 
 // commands
 
@@ -123,6 +123,8 @@ void cc2500_cfg_patable(uint8_t table[], uint16_t length);
 #define CC2500_GDOx_PREAMB_OK         0x08  /* assert when preamble quality reached : PQI/PQT ok   */
 #define CC2500_GDOx_CCA               0x09  /* Clear channel assessment. High when RSSI level is   */
                                             /* below threshold (dependent on the current CCA_MODE) */
+
+#define CC2500_GDOx_CLK_XOSC_192      0x3F /* CLK_XOSC/192 */
 /**
  * @}
  */
@@ -570,6 +572,14 @@ void cc2500_cfg_pa_power(uint8_t cfg);
 
 // Status Registers access
 /**
+ * \brief read the partnum register, should be 128
+ */
+uint8_t cc2500_status_partnum(void);
+/**
+ * \brief read the version register, should be 3
+ */
+uint8_t cc2500_status_version(void);
+/**
  * \brief read the register containing the last CRC calculation match
  * and LQI estimate
  */
@@ -640,7 +650,7 @@ uint16_t cc2500_gdo0_read(void);
  * \brief register a callback function for GDO0 interrupt
  * \param cb a function pointer
  */
-void cc2500_gdo0_register_callback(uint16_t (*cb)(void));
+void cc2500_gdo0_register_callback(int (*cb)(void));
 
 /**
  * \brief enable interrupt for GDO2
@@ -670,7 +680,7 @@ uint16_t cc2500_gdo2_read(void);
  * \brief register a callback function for GDO2 interrupt
  * \param cb a function pointer
  */
-void cc2500_gdo2_register_callback(uint16_t (*cb)(void));
+void cc2500_gdo2_register_callback(int (*cb)(void));
 
 #endif
 
