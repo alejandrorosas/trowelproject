@@ -82,7 +82,6 @@
 #define CC2500_STROBE_SRX       0x34      /*  SRX     - Enable RX. Perform calibration if enabled. */
 #define CC2500_STROBE_STX       0x35      /*  STX     - Enable TX. If in RX state, only enable TX if CCA passes. */
 #define CC2500_STROBE_SIDLE     0x36      /*  SIDLE   - Exit RX / TX, turn off frequency synthesizer. */
-#define CC2500_STROBE_SRSVD     0x37      /*  SRVSD   - Reserved.  Do not use. */
 #define CC2500_STROBE_SWOR      0x38      /*  SWOR    - Start automatic RX polling sequence (Wake-on-Radio) */
 #define CC2500_STROBE_SPWD      0x39      /*  SPWD    - Enter power down mode when CSn goes high. */
 #define CC2500_STROBE_SFRX      0x3A      /*  SFRX    - Flush the RX FIFO buffer. */
@@ -97,7 +96,7 @@
  *                                         Prototypes
  * ------------------------------------------------------------------------------------------------
  */
-void cc2500_init(void);
+void cc2500_init(uint8_t* init_cfg, int len);
 
 uint8_t cc2500_cmd_strobe(uint8_t addr);
 
@@ -107,21 +106,45 @@ void cc2500_write_reg(uint8_t addr, uint8_t value);
 void cc2500_write_fifo(uint8_t * pWriteData, uint8_t len);
 void cc2500_read_fifo(uint8_t * pReadData, uint8_t len);
 
-#define cc2500_gdo0_int_enable P2IE |= BV(GDO0_PIN)
-#define cc2500_gdo0_int_disable P2IE &= ~BV(GDO0_PIN)
-#define cc2500_gdo0_int_set_rising P2IES &= ~BV(GDO0_PIN)
-#define cc2500_gdo0_int_set_falling P2IES |= BV(GDO0_PIN)
-#define cc2500_gdo0_int_clear P2IFG &= ~BV(GDO0_PIN)
+#define cc2500_gdo0_int_enable() P2IE |= BV(CC2500_GDO0_PIN)
+#define cc2500_gdo0_int_disable() P2IE &= ~BV(CC2500_GDO0_PIN)
+#define cc2500_gdo0_int_set_rising() P2IES &= ~BV(CC2500_GDO0_PIN)
+#define cc2500_gdo0_int_set_falling() P2IES |= BV(CC2500_GDO0_PIN)
+#define cc2500_gdo0_int_clear() P2IFG &= ~BV(CC2500_GDO0_PIN)
 void cc2500_gdo0_int_set_cb(int (*cb)(void));
 
-#define cc2500_gdo2_int_enable P2IE |= BV(GDO2_PIN)
-#define cc2500_gdo2_int_disable P2IE &= ~BV(GDO2_PIN)
-#define cc2500_gdo2_int_set_rising P2IES &= ~BV(GDO2_PIN)
-#define cc2500_gdo2_int_set_falling P2IES |= BV(GDO2_PIN)
-#define cc2500_gdo2_int_clear P2IFG &= ~BV(GDO2_PIN)
+#define cc2500_gdo2_int_enable() P2IE |= BV(CC2500_GDO2_PIN)
+#define cc2500_gdo2_int_disable() P2IE &= ~BV(CC2500_GDO2_PIN)
+#define cc2500_gdo2_int_set_rising() P2IES &= ~BV(CC2500_GDO2_PIN)
+#define cc2500_gdo2_int_set_falling() P2IES |= BV(CC2500_GDO2_PIN)
+#define cc2500_gdo2_int_clear() P2IFG &= ~BV(CC2500_GDO2_PIN)
 void cc2500_gdo2_int_set_cb(int (*cb)(void));
 
+// Defines for standard commands
+#define cc2500_strobe_nop()      cc2500_cmd_strobe(CC2500_STROBE_SNOP)
+#define cc2500_strobe_idle()     cc2500_cmd_strobe(CC2500_STROBE_SIDLE)
+#define cc2500_strobe_tx()       cc2500_cmd_strobe(CC2500_STROBE_STX)
+#define cc2500_strobe_rx()       cc2500_cmd_strobe(CC2500_STROBE_SRX)
+#define cc2500_strobe_flush_tx() cc2500_cmd_strobe(CC2500_STROBE_SFTX)
+#define cc2500_strobe_flush_rx() cc2500_cmd_strobe(CC2500_STROBE_SFRX)
+#define cc2500_strobe_calib()    cc2500_cmd_strobe(CC2500_STROBE_SCAL)
 
-/**************************************************************************************************
- */
+#define CC2500_NOP_STATE_MASK    0x70
+#define CC2500_NOP_STATE_IDLE    0x00
+#define CC2500_NOP_STATE_RX      0x10
+#define CC2500_NOP_STATE_TX      0x20
+#define CC2500_NOP_STATE_FSTXON  0x30
+#define CC2500_NOP_STATE_CALIB   0x40
+#define CC2500_NOP_STATE_SETTL   0x50
+#define CC2500_NOP_STATE_RXOVER  0x60
+#define CC2500_NOP_STATE_TXUNDER 0x70
+
+// defines for statuses
+#define cc2500_status_txbytes() cc2500_read_reg(CC2500_REG_TXBYTES)
+#define cc2500_status_rxbytes() cc2500_read_reg(CC2500_REG_RXBYTES)
+#define cc2500_status_rssi()    cc2500_read_reg(CC2500_REG_RSSI)
+#define cc2500_status_crclqi()  cc2500_read_reg(CC2500_REG_LQI)
+#define CC2500_CRC_MASK 0x80
+
+/***********************************************************************/
 #endif
