@@ -3,7 +3,7 @@
 
 #include "spi.h"
 #include "cc2500.h"
-#include "cc2500_smartrf.h"
+//#include "cc2500_smartrf.h"
 
 #define GDO0_PIN 6
 #define GDO2_PIN 7
@@ -22,7 +22,7 @@ void inline micro_delay(register unsigned int n) {
         : [n] "+r"(n));
 }
 
-void cc2500_init(uint8_t init_cfg[][2], int len) {
+void cc2500_init(uint8_t* init_cfg, int len) {
   
   P2SEL &= ~(BV(GDO0_PIN) | BV(GDO2_PIN));
   P2DIR &= ~(BV(GDO0_PIN) | BV(GDO2_PIN));
@@ -75,7 +75,7 @@ void cc2500_init(uint8_t init_cfg[][2], int len) {
   int i;
   if (init_cfg && len > 0) {
     for (i=0; i<len; i++) {
-      cc2500_write_reg(init_cfg[i][0], init_cfg[i][1]);
+      cc2500_write_reg(init_cfg[2*len], init_cfg[2*len + 1]);
     }
   }
 }
