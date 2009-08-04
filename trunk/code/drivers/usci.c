@@ -9,7 +9,6 @@
 #endif
 
 uint8_t spi_last_read;
-static uint8_t data_test=0;
 
 void spi_init(void) {
   
@@ -37,35 +36,28 @@ void spi_init(void) {
   IE2 &= ~(UCB0TXIE | UCB0RXIE);
 }
 
-int spi_write(const uint8_t* data, int len, int (*done)(void)) {
-    int i;
-    
-    if (done==NULL) {
-        if ( UCB0STAT & UCBUSY )
-            return 0;
+int spi_write(const uint8_t* data, int len) {
+  int i;
+  uint8_t dummy;
+  
+  if ( UCB0STAT & UCBUSY )
+      return 0;
 
-        for (i=0; i<len; i++) {
-            UCB0TXBUF = data[i];
-            while (!(IFG2 & UCB0TXIFG)) ;
-        }
+  for (i=0; i<len; i++) {
+      UCB0TXBUF = data[i];
+      while (!(IFG2 & UCB0RXIFG)) ;
+      dummy = UCB0RXBUF;
+  }
 
-        while (UCB0STAT & UCBUSY);
+  while (UCB0STAT & UCBUSY);
 
-        return i;
-    } else {
-        // not implemented
-        return 0;
-    }
-    return 0;
+  return i;
 }
 
 void spi_write_single(uint8_t data) {
-    data_test = 0;
     
     if ( UCB0STAT & UCBUSY )
         return;
-    
-    data_test = data;
     
     UCB0TXBUF = data;
     
@@ -78,29 +70,24 @@ void spi_write_single(uint8_t data) {
     while (UCB0STAT & UCBUSY);
 }
 
-int spi_read(uint8_t* data, int len, int (*done)(void)) {
+int spi_read(uint8_t* data, int len) {
     int i;
     
-    if (done==NULL) {
-        if (UCB0STAT & UCBUSY)
-            return 0;
-        
-        for (i=0; i<len; i++) {
-            // wait for TX ready
-            while (!(IFG2 & UCB0TXIFG));
-            // start sending
-            UCB0TXBUF = 0;
-            // wait for RX ready
-            while (!(IFG2 & UCB0RXIFG));
-            // store RX data
-            data[i] = UCB0RXBUF;
-        }
+    if (UCB0STAT & UCBUSY)
+        return 0;
+    
+    for (i=0; i<len; i++) {
+        // wait for TX ready
+        while (!(IFG2 & UCB0TXIFG));
+        // start sending
+        UCB0TXBUF = 0;
+        // wait for RX ready
+        while (!(IFG2 & UCB0RXIFG));
+        // store RX data
+        data[i] = UCB0RXBUF;
+    }
         
         return i;
-    } else {
-        // not implemented
-        return 0;
-    }
 }
 
 uint8_t spi_read_single(void) {

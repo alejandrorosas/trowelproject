@@ -9,7 +9,7 @@
 /* configuration registers */
 #define CC2500_REG_IOCFG2       0x00      /*  IOCFG2   - GDO2 output pin configuration  */
 #define CC2500_REG_IOCFG1       0x01      /*  IOCFG1   - GDO1 output pin configuration  */
-#define CC2500_REG_IOCFG0       0x02      /*  IOCFG1   - GDO0 output pin configuration  */
+#define CC2500_REG_IOCFG0       0x02      /*  IOCFG0   - GDO0 output pin configuration  */
 #define CC2500_REG_FIFOTHR      0x03      /*  FIFOTHR  - RX FIFO and TX FIFO thresholds */
 #define CC2500_REG_SYNC1        0x04      /*  SYNC1    - Sync word, high byte */
 #define CC2500_REG_SYNC0        0x05      /*  SYNC0    - Sync word, low byte */
