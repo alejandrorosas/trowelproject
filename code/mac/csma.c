@@ -60,11 +60,15 @@ static struct {
 
 static int rx_ready;
 
+uint8_t test;
 void csma_init() {
     cc2500_init((uint8_t*) csma_radio_reg, sizeof(csma_radio_reg)/2);
     
     cc2500_gdo0_int_disable();
     cc2500_gdo2_int_disable();
+    
+    
+    test = cc2500_read_reg(CC2500_REG_FREND1);
     
     rx_ready = 0;
     reset_rx();
@@ -74,14 +78,15 @@ void csma_init() {
 static uint8_t tx_fifo_bytes;
 
 int csma_send(uint16_t dest_addr, uint8_t* data, int len) {
-    uint8_t tx_len;
+    uint8_t tx_len, state;
     if (len > 59) {
         return 0;
     }
+    cc2500_strobe_idle();
     
     tx_fifo_bytes = cc2500_status_txbytes();
     
-    tx_len = len + 5;
+    tx_len = len + 4;
     cc2500_write_fifo(&tx_len, 1);
     cc2500_write_fifo((uint8_t*)&csma_addr, 2);
     cc2500_write_fifo((uint8_t*)&dest_addr, 2);
@@ -90,9 +95,10 @@ int csma_send(uint16_t dest_addr, uint8_t* data, int len) {
     tx_fifo_bytes = cc2500_status_txbytes();
     
     cc2500_gdo0_int_set_cb(tx_cb);
-    cc2500_cmd_strobe(CC2500_STROBE_STX);
+    cc2500_strobe_tx();
     
-    if ( (cc2500_strobe_nop() & CC2500_NOP_STATE_MASK) == CC2500_NOP_STATE_RX ) {
+    state = cc2500_strobe_nop();
+    if ( (state & CC2500_NOP_STATE_MASK) == CC2500_NOP_STATE_RX ) {
         return 0;
     }
     
@@ -152,13 +158,14 @@ static void reset_rx() {
 
 
 static int rx_cb() {
+    int ret = 0;
     if (! (cc2500_status_crclqi() & CC2500_CRC_MASK) ) {
         reset_rx();
         return 0;
     }
     
     uint8_t len;
-    cc2500_fifo_get(&len, 1);
+    cc2500_read_fifo(&len, 1);
     if (len > 63) {
         reset_rx();
         return 0;
@@ -173,10 +180,10 @@ static int rx_cb() {
     cc2500_read_fifo(data, 2);
     
     if (csma_rx_cb) {
-        return csma_rx_cb();
+        ret = csma_rx_cb();
     }
     reset_rx();
-    return 0;
+    return ret;
 }
 
 static int cca_cb() {

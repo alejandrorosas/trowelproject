@@ -75,7 +75,7 @@ void cc2500_init(uint8_t* init_cfg, int len) {
   int i;
   if (init_cfg && len > 0) {
     for (i=0; i<len; i++) {
-      cc2500_write_reg(init_cfg[2*len], init_cfg[2*len + 1]);
+      cc2500_write_reg(init_cfg[2*i], init_cfg[2*i + 1]);
     }
   }
 }
@@ -118,18 +118,20 @@ void cc2500_write_reg(uint8_t addr, uint8_t value) {
 }
 
 void cc2500_write_fifo(uint8_t * pWriteData, uint8_t len) {
-  
   spi_radio_select();
   spi_write_single(CC2500_REG_TXFIFO | BURST_BIT);
-  spi_write(pWriteData, len, 0x0);
+  spi_write(pWriteData, len);
   spi_radio_deselect();
 }
 
 void cc2500_read_fifo(uint8_t * pReadData, uint8_t len) {
-  
+  int i;
   spi_radio_select();
   spi_write_single(CC2500_REG_RXFIFO | BURST_BIT | READ_BIT);
-  spi_read(pReadData, len, 0x0);
+  for (i=0; i<len; i++) {
+    pReadData[i] = spi_read_single();
+  }
+  //~ spi_read(pReadData, len);
   spi_radio_deselect();
 }
 
