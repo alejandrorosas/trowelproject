@@ -9,6 +9,7 @@
 #endif
 
 uint8_t spi_last_read;
+int spi_last_config;
 
 void spi_init(void) {
   
@@ -20,6 +21,12 @@ void spi_init(void) {
   P3SEL &= ~1; // set IO
   P3DIR |= 1; // set output
   spi_radio_deselect();
+  
+  // configure P4.6 IO for accel CSn
+  P4SEL &= ~BV(6); // set IO
+  P4DIR |= BV(6); // set output
+  spi_accel_deselect();
+  
   
   /* initialize the SPI registers */
   UCB0CTL1 = UCSWRST;
@@ -34,6 +41,8 @@ void spi_init(void) {
   
   // disable interrupts
   IE2 &= ~(UCB0TXIE | UCB0RXIE);
+  
+  spi_last_config = 0;
 }
 
 int spi_write(const uint8_t* data, int len) {
@@ -104,5 +113,34 @@ uint8_t spi_read_single(void) {
 }
 
 void uart_init(void) {
-    ;
+  P3SEL = 0x30;                             // P3.4,5 = USCI_A0 TXD/RXD
+  UCA0CTL1 |= UCSSEL_2;                     // SMCLK
+  UCA0BR0 = 8;                              // 1MHz 115200
+  UCA0BR1 = 0;                              // 1MHz 115200
+  UCA0MCTL = UCBRS2 + UCBRS0;               // Modulation UCBRSx = 5
+  UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
+  IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
+  eint();
+}
+
+int uart_putchar(int c) {
+  UCA0TXBUF = (char) c;
+  while (!(IFG2&UCA0TXIFG));
+  return c;
+}
+
+int (*uart_cb)(int c) = 0x0;
+void uart_register_cb(int (*cb)(int c)) {
+  uart_cb = cb;
+}
+
+interrupt (USCIAB0RX_VECTOR) usci_irq(void)
+{
+  char dummy;
+  if (IFG2 & UCA0TXIFG) {
+    dummy = UCA0RXBUF;
+    if (uart_cb)
+      if (uart_cb(dummy))
+        LPM4_EXIT;
+  }
 }
