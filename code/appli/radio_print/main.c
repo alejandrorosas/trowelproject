@@ -1,5 +1,6 @@
 #include <io.h>
 #include <signal.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -18,7 +19,12 @@ volatile int event = 0;
 uint16_t rx_from;
 struct msg {
   int x, y, z;
+  char data[16];
 } rx_msg;
+
+int putchar(int c) {
+  return uart_putchar(c);
+}
 
 int send(void) {
   event = EVENT_SEND;
@@ -35,10 +41,6 @@ int rx() {
   return 1;
 }
 
-int putchar(int c) {
-  return uart_putchar(c);
-}
-
 int main(void) {
     
   WDTCTL = WDTPW + WDTHOLD; // Stop watchdog timer
@@ -53,19 +55,26 @@ int main(void) {
   leds_off(LEDS_ALL);
   
   csma_init();
+  csma_set_tx_cb(sent);
   csma_set_rx_cb(rx);
   
-  uart_init();
-  
   leds_on(LEDS_ALL);
+  
+  uart_init();
   
   int len;
   while (1) {
     event = 0;
     LPM0;
     switch (event) {
+    case EVENT_SEND:
+      //~ csma_send(CSMA_BROADCAST, msg, strlen(msg));
+      break;
+    case EVENT_SENT:
+      leds_toggle(LED_GREEN);
+      break;
     case EVENT_RX:
-      len = csma_read(&rx_from, (uint8_t*)&rx_msg, sizeof(rx_msg));
+      len = csma_read(&rx_from, &rx_msg, sizeof(rx_msg));
       leds_toggle(LED_RED);
       printf("%.3i, %.3i, %.3i\n", rx_msg.x, rx_msg.y, rx_msg.z);
       break;
