@@ -47,7 +47,7 @@ int main(void) {
   
   timer_start(TIMER_SOURCE_SMCLK, 8);
   timer_register_cb(TIMER_ALARM_0, send);
-  timer_set_alarm(TIMER_ALARM_0, 65000, 65000, TIMER_MODE_FROM_NOW, 0);
+  timer_set_alarm(TIMER_ALARM_0, 10000, 6250, TIMER_MODE_FROM_NOW, 0);
   
   leds_on(LEDS_ALL);
   
@@ -60,7 +60,7 @@ int main(void) {
       msg.x = lis302_getx();
       msg.y = lis302_gety();
       msg.z = lis302_getz();
-      csma_send(CSMA_BROADCAST, (uint8_t*)&msg, sizeof(msg));
+      csma_send(CSMA_BROADCAST, (uint8_t*)&msg, 6);
       break;
     case EVENT_SENT:
       leds_toggle(LED_GREEN);
