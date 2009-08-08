@@ -16,6 +16,13 @@
 #define REG_OUTY    0x2B
 #define REG_OUTZ    0x2D
 
+#define CTRL1_400HZ 0x80 // 400Hz data rate, otherwise 100Hz
+#define CTRL1_EN    0x40 // Enable, otherwise Power Down
+#define CTRL1_FS    0x20 // Full Scale (+/-8g), otherwise +/-2g
+#define CTRL1_ZEN   0x04 // Z enable
+#define CTRL1_YEN   0x02 // Y enable
+#define CTRL1_XEN   0x01 // X enable
+
 uint8_t iam;
 
 static void inline write_reg(uint8_t addr, uint8_t value);
@@ -25,7 +32,7 @@ void lis302_init(void) {
   spi_init();
   
   write_reg(REG_CTRL2, 0x40);
-  write_reg(REG_CTRL1, 0x47);
+  write_reg(REG_CTRL1, CTRL1_EN | CTRL1_XEN | CTRL1_YEN | CTRL1_ZEN);
   iam = read_reg(REG_CTRL1);
   
   iam = read_reg(REG_STATUS);
