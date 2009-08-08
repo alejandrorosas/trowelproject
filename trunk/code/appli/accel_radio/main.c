@@ -1,6 +1,6 @@
 #include <io.h>
 #include <signal.h>
-#include <string.h>
+
 #include "clock.h"
 #include "leds.h"
 #include "csma.h"
