@@ -76,7 +76,7 @@ int main(void) {
     case EVENT_RX:
       len = csma_read(&rx_from, &rx_msg, sizeof(rx_msg));
       leds_toggle(LED_RED);
-      printf("%.3i, %.3i, %.3i\n", rx_msg.x, rx_msg.y, rx_msg.z);
+      printf("% .3i, % .3i, % .3i\n", rx_msg.x, rx_msg.y, rx_msg.z);
       break;
     }
   }
