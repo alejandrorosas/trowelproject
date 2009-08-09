@@ -18,8 +18,8 @@
 volatile int event = 0;
 uint16_t rx_from;
 struct msg {
-  int x, y, z;
-  char data[16];
+  uint32_t t;
+  int16_t x, y, z;
 } rx_msg;
 
 int putchar(int c) {
@@ -76,7 +76,7 @@ int main(void) {
     case EVENT_RX:
       len = csma_read(&rx_from, &rx_msg, sizeof(rx_msg));
       leds_toggle(LED_RED);
-      printf("% .3i, % .3i, % .3i\n", rx_msg.x, rx_msg.y, rx_msg.z);
+      printf("t=%lu, x=%i, y=%i, z=%i\n", rx_msg.t, rx_msg.x, rx_msg.y, rx_msg.z);
       break;
     }
   }
