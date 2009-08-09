@@ -6,7 +6,7 @@ from PyQt4 import Qt
 import PyQt4.Qwt5 as Qwt
 import numpy
 
-from reader import ScopeReader
+from sensor import ScopeReader
 
 REFRESH_RATE = 10
 X_SPAN = 10
