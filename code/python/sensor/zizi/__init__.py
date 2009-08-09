@@ -1,2 +1,2 @@
 
-import zizi
+from serial_reader import *
