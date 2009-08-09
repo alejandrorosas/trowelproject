@@ -43,7 +43,7 @@ class Zizi(threading.Thread):
                     self.a_z = float(m.group('z'))/50
                     
                     if self.callback is not None:
-                        self.callback((self.t_a, self.a_x, self.a_y, self.a_z))
+                        self.callback({'t':self.t_a, 'x':self.a_x, 'y':self.a_y, 'z':self.a_z})
                 else:
                     print "no match"
         print "Zizi Stopped"
@@ -52,7 +52,7 @@ class Zizi(threading.Thread):
         self.callback = callback
     
     def get_data(self):
-        return (self.t_a, self.a_x, self.a_y, self.a_z)
+        return {'t':self.t_a, 'x':self.a_x, 'y':self.a_y, 'z':self.a_z}
         
     def terminate(self):
         self.keep_running = False

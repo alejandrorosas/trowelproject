@@ -14,8 +14,7 @@ class ZiziReader(oscillo.SensorReader):
         oscillo.X_SPAN = 10
         
     def get_new_data(self):
-        tu = self.zizi.get_data()
-        return {'t':tu[0], 'x':tu[1], 'y':tu[2], 'z':tu[3]}
+        return self.zizi.get_data()
         
     def terminate(self):
         self.zizi.terminate()
