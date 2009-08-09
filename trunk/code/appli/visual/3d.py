@@ -19,7 +19,6 @@ az_text = label(frame=axes, pos=(0,0,1.1), text="z", color=(0,0,1))
 accel = arrow(pos=(0,0,0), axis=(0, 0.5, 0), color=(1,1,0))
 #~ 
 ser = Serial("/dev/ttyUSB1", 115200)
-
 ptrn = re.compile("(?P<x>[- ][0-9]{3}), (?P<y>[- ][0-9]{3}), (?P<z>[- ][0-9]{3})\n")
 
 data = ''

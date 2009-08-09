@@ -8,44 +8,50 @@ import numpy
 
 REFRESH_RATE = 10
 X_SPAN = 10
-X_RIGHT_FREE = 2
 Y_SPAN = 3
 Y_CENTER = 0
 
-class Reader:
-    dt = 1./REFRESH_RATE
-    t = numpy.array([])
-    data = t*0
-    count = 0
-    
+class ScopeReader:
     def __init__(self):
-        pass
-    
-    def update(self):
-        
-        self.t = numpy.append(self.t, self.count*self.dt)
-        self.data = numpy.append(self.data, numpy.random.randn(1))
+        self.count = 0
+    def refresh(self):
+        v = numpy.sin(self.count/10.*numpy.pi) * 0.1
+        a = (numpy.array(self.count), numpy.array(-1+v), numpy.array(v), numpy.array(1+v))
         self.count += 1
-        
-        if self.t[-1] > X_SPAN:
-            self.t = self.t[-int(X_SPAN/self.dt):]
-            self.data = self.data[-int(X_SPAN/self.dt):]
-        
-        return True
+        return a
 
 # class Reader
 
+class ScopeData:
+    def __init__(self, reader=None):
+        self.t   = numpy.array([])
+        self.a_x = numpy.array([])
+        self.a_y = numpy.array([])
+        self.a_z = numpy.array([])
+        self.magn = numpy.array([])
+        
+        if reader is None:
+            self.reader = ScopeReader()
+        else:
+            self.reader = reader
+        
+    def refresh(self):
+        (t, x, y, z) = self.reader.refresh()
+        self.t   = numpy.append(self.t, t)
+        self.a_x = numpy.append(self.a_x, x)
+        self.a_y = numpy.append(self.a_y, y)
+        self.a_z = numpy.append(self.a_z, z)
+        
+        self.magn = numpy.append(self.magn, numpy.sqrt(numpy.square(x)+numpy.square(y)+numpy.square(z)))
+    
 
 class Scope(Qwt.QwtPlot):
     
     def __init__(self, reader=None, *args):
         Qwt.QwtPlot.__init__(self, *args)
         
-        if reader is None:
-            self.reader = Reader()
-        else:
-            self.reader = reader
-                
+        self.data = ScopeData(reader)
+        
         # make a QwtPlot widget
         self.insertLegend(Qwt.QwtLegend(), Qwt.QwtPlot.RightLegend)
 
@@ -64,13 +70,21 @@ class Scope(Qwt.QwtPlot):
         self.setAxisScale(Qwt.QwtPlot.yLeft, Y_CENTER-(Y_SPAN/2.), Y_CENTER+(Y_SPAN/2.))
         
         # insert a few curves
-        self.curve = Qwt.QwtPlotCurve('a_x')
-        self.curve.setPen(Qt.QPen(Qt.Qt.red))
-        self.curve.attach(self)
+        self.a_x = Qwt.QwtPlotCurve('a_x')
+        self.a_x.setPen(Qt.QPen(Qt.Qt.red))
+        self.a_x.attach(self)
+        self.a_y = Qwt.QwtPlotCurve('a_y')
+        self.a_y.setPen(Qt.QPen(Qt.Qt.blue))
+        self.a_y.attach(self)
+        self.a_z = Qwt.QwtPlotCurve('a_z')
+        self.a_z.setPen(Qt.QPen(Qt.Qt.green))
+        self.a_z.attach(self)
         
-        # initialize the data
-        self.curve.setData(self.reader.t, self.reader.data)
-
+        # magn
+        self.magn = Qwt.QwtPlotCurve('magn')
+        self.magn.setPen(Qt.QPen(Qt.Qt.black))
+        self.magn.attach(self)
+        
         # insert a horizontal marker at y = 0
         mY = Qwt.QwtPlotMarker()
         mY.setLineStyle(Qwt.QwtPlotMarker.HLine)
@@ -81,7 +95,7 @@ class Scope(Qwt.QwtPlot):
         timer = Qt.QTimer(self)
         timer.connect(timer,
                       Qt.SIGNAL('timeout()'),
-                      self.refreshData)
+                      self.refresh)
         timer.start(REFRESH_RATE)
         
         # replot
@@ -89,14 +103,26 @@ class Scope(Qwt.QwtPlot):
 
     # __init__()
     
-    def refreshData(self):
+    def refresh(self):
         # update the data
-        if self.reader.update():
-            #plot it
-            self.curve.setData(self.reader.t, self.reader.data)
-            
-            self.setAxisScale(Qwt.QwtPlot.xBottom, numpy.max(self.reader.t)-X_SPAN+X_RIGHT_FREE, numpy.max(self.reader.t)+X_RIGHT_FREE)
-            self.replot()
+        self.data.refresh()
+        
+        # plot the data
+        self.a_x.setData(self.data.t, self.data.a_x)
+        self.a_y.setData(self.data.t, self.data.a_y)
+        self.a_z.setData(self.data.t, self.data.a_z)
+        
+        self.magn.setData(self.data.t, self.data.magn)
+        
+        # update the X scale
+        if len(self.data.t) == 0:
+            max = 0
+        else:
+            max = numpy.max(self.data.t)
+        
+        if max > X_SPAN:
+            self.setAxisScale(Qwt.QwtPlot.xBottom, max-X_SPAN, max)
+        self.replot()
 
 # class Plot
 
