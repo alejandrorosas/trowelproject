@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 from visual import *
-
-from wiimote import MyWiimote
 import math
 
 class Body:
@@ -237,60 +235,3 @@ class Body:
 
 
 
-print 'Put Wiimote in discoverable mode now (press 1+2)...'
-wiimote = MyWiimote()
-print 'wiimote connected'
-
-body = Body()
-
-ball1 = sphere(pos=(0,0,0), radius=0.5)
-ball2 = sphere(pos=(0,0,20), radius=0.5)
-ball3 = sphere(pos=(0,0,-20), radius=0.5)
-
-scene.forward=(-1,-1,-1)
-
-#total_roll = 0
-#total_pitch = 0
-#total_yaw = 0
-
-#velocity = vector(0,0,2)
-
-dir (wiimote)
-
-while true:
-	rate(100)
-	#print wiimote.get_accel_tuple()[2]
-	if wiimote.get_accel_tuple()[2]<0.4:
-		body.walk()
-		  
-	#body.rotate_left_arm_x(pi*0.01)
-	#body.rotate_left_arm_y(pi*0.01)
-	#body.rotate_left_arm_z(pi*0.01)
-	
-	#body.rotate_right_arm_x(wiimote.get_pitch()-total_pitch)
-	#total_pitch=wiimote.get_pitch()
-	#body.rotate_right_arm_y(wiimote.get_roll()-total_roll)
-	#total_roll= wiimote.get_roll()
-	
-	#body.rotate_right_arm_z(wiimote.get_yaw()-total_yaw)
-	#total_yaw= wiimote.get_yaw()
-	
-	#body.rotate_head_y(-pi*0.01)
-	#body.rotate_head_x(-pi*0.02)
-	#body.rotate_head_z(-pi*0.02)
-	
-	#body.rotate_body_y(pi*0.01)
-	#body.move_body(velocity)
-	
-	#body.rotate_left_leg_x(pi*0.01)
-	#body.rotate_right_leg_x(-pi*0.01)
-	
-	
-	#if body.body.z > 20:
-#		body.body.velocity.z = -body.body.velocity.z
-	#if body.body.z < -20:
-	#	body.body.velocity.z = -body.body.velocity.z
-
-
-
-wiimote.close()
