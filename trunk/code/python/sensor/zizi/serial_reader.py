@@ -1,8 +1,5 @@
-#!/usr/bin/env python
 
-import oscillo, serial, re, sys
-from PyQt4 import Qt
-import numpy
+import oscillo
 
 class SerialReader(oscillo.ScopeReader):
   
@@ -43,27 +40,3 @@ class SerialReader(oscillo.ScopeReader):
         
         #~ print (t, x, y, z)
         return (t, x, y, z)
-        
-
-
-def make():
-    reader = SerialReader()
-    demo = oscillo.Scope(reader)
-    demo.resize(500, 300)
-    demo.show()
-    return demo
-
-# make()
-
-
-def main(args):
-    app = Qt.QApplication(args)
-    demo = make()
-    sys.exit(app.exec_())
-
-# main()
-
-
-# Admire
-if __name__ == '__main__':
-    main(sys.argv)

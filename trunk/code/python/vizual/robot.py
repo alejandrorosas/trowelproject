@@ -162,14 +162,14 @@ class Body:
 			
 			angle = -pi*0.01
 			left_current_angle+=angle
-			body.rotate_left_leg_x(angle)
-			body.rotate_right_leg_x(-angle)
+			self.rotate_left_leg_x(angle)
+			self.rotate_right_leg_x(-angle)
 			
 			l=self.left_leg.height
 			deltah = l - l * math.cos(left_current_angle)
 			deltad = l * math.sin(left_current_angle)
 			
-			body.move_body(vector(0,deltah_current-deltah,deltad_current-deltad))
+			self.move_body(vector(0,deltah_current-deltah,deltad_current-deltad))
 			deltah_current=deltah
 			deltad_current=deltad
 			
@@ -180,19 +180,19 @@ class Body:
 			rate(50)
 			
 			left_current_angle+=angle
-			body.rotate_left_leg_x(angle)
-			body.rotate_right_leg_x(-angle)
+			self.rotate_left_leg_x(angle)
+			self.rotate_right_leg_x(-angle)
 			
 			l=self.left_leg.height
 			deltah = l - l * math.cos(left_current_angle)
 			deltad = l * math.sin(left_current_angle)
 			
-			body.move_body(vector(0,deltah_current-deltah,deltad-deltad_current))
+			self.move_body(vector(0,deltah_current-deltah,deltad-deltad_current))
 			deltah_current=deltah
 			deltad_current=deltad
 		#body.rotate_right_leg_x(-pi*0.01)
-		body.rotate_left_leg_x(-left_current_angle)
-		body.rotate_right_leg_x(left_current_angle)
+		self.rotate_left_leg_x(-left_current_angle)
+		self.rotate_right_leg_x(left_current_angle)
 
 	def walk_right(self):
 		left_current_angle = 0.0
@@ -202,14 +202,14 @@ class Body:
 			rate(50)
 			angle = pi*0.01
 			left_current_angle+=angle
-			body.rotate_left_leg_x(angle)
-			body.rotate_right_leg_x(-angle)
+			self.rotate_left_leg_x(angle)
+			self.rotate_right_leg_x(-angle)
 			
 			l=self.left_leg.height
 			deltah = l - l * math.cos(left_current_angle)
 			deltad = -l * math.sin(left_current_angle)
 			
-			body.move_body(vector(0,deltah_current-deltah,deltad_current-deltad))
+			self.move_body(vector(0,deltah_current-deltah,deltad_current-deltad))
 			deltah_current=deltah
 			deltad_current=deltad
 
@@ -219,19 +219,19 @@ class Body:
 			rate(50)
 			
 			left_current_angle+=angle
-			body.rotate_left_leg_x(angle)
-			body.rotate_right_leg_x(-angle)
+			self.rotate_left_leg_x(angle)
+			self.rotate_right_leg_x(-angle)
 			
 			l=self.left_leg.height
 			deltah = l - l * math.cos(left_current_angle)
 			deltad = -l * math.sin(left_current_angle)
 			
-			body.move_body(vector(0,deltah_current-deltah,deltad-deltad_current))
+			self.move_body(vector(0,deltah_current-deltah,deltad-deltad_current))
 			deltah_current=deltah
 			deltad_current=deltad
 		#body.rotate_right_leg_x(-pi*0.01)
-		body.rotate_left_leg_x(-left_current_angle)
-		body.rotate_right_leg_x(left_current_angle)
+		self.rotate_left_leg_x(-left_current_angle)
+		self.rotate_right_leg_x(left_current_angle)
 
 
 
