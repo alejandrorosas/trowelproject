@@ -7,7 +7,7 @@ import PyQt4.Qwt5 as Qwt
 import numpy
 import time
 
-REFRESH_RATE = 10
+REFRESH_RATE = 100
 X_SPAN = 10
 Y_SPAN = 10
 Y_CENTER = 0
@@ -26,12 +26,12 @@ class DefaultReader(SensorReader):
         self.count = 0
     
     def get_new_data(self):
-        t = self.count/float(REFRESH_RATE)/10
+        t = self.count * 1.0/REFRESH_RATE
         x = 2*numpy.cos(2*numpy.pi*5*t) + numpy.random.randn()
         y = numpy.sin(2*numpy.pi*2*t)
         k = t-int(t)
         if k<0.5:
-            z = -1
+            z = 0
         else:
             z = 1
         self.count += 1
@@ -88,7 +88,7 @@ class TimeScope(Qwt.QwtPlot):
         self.setAxisTitle(Qwt.QwtPlot.yLeft, 'a (g)')
         
         # set axis scales
-        #~ self.setAxisScale(Qwt.QwtPlot.xBottom, 0, X_SPAN)
+        self.setAxisScale(Qwt.QwtPlot.xBottom, 0, X_SPAN)
         self.setAxisScale(Qwt.QwtPlot.yLeft, Y_CENTER-(Y_SPAN/2.), Y_CENTER+(Y_SPAN/2.))
         
         # insert a few curves
@@ -105,7 +105,7 @@ class TimeScope(Qwt.QwtPlot):
         # add a Timer
         timer = Qt.QTimer(self)
         timer.connect(timer, Qt.SIGNAL('timeout()'), self.refresh)
-        timer.start(REFRESH_RATE)
+        timer.start(1000./REFRESH_RATE)
         
         # replot
         self.replot()
@@ -184,7 +184,7 @@ class FreqScope(Qwt.QwtPlot):
         # add a Timer
         timer = Qt.QTimer(self)
         timer.connect(timer, Qt.SIGNAL('timeout()'), self.refresh)
-        timer.start(REFRESH_RATE)
+        timer.start(10*1000./REFRESH_RATE)
         
     def refresh(self):
         # TODO
@@ -193,22 +193,22 @@ class FreqScope(Qwt.QwtPlot):
         dt = numpy.average(t[1:]-t[:-1])
         
         freq = numpy.fft.fftfreq(len(sig), dt)
-        freq = numpy.concatenate((freq[:len(freq)/2-1], freq[len(freq)/2:]))
+        freq = numpy.concatenate((freq[len(freq)/2:], freq[:len(freq)/2-1]))
         sigF = abs(numpy.fft.fft(sig))
         sigF /= numpy.max(sigF)
-        sigF = numpy.concatenate((sigF[:len(sigF)/2-1], sigF[len(sigF)/2:]))
+        sigF = numpy.concatenate((sigF[len(sigF)/2:], sigF[:len(sigF)/2-1]))
         self.a_x.setData(freq, sigF)
         
         sig = self.accel_data.data['y']
         sigF = abs(numpy.fft.fft(sig))
         sigF /= numpy.max(sigF)
-        sigF = numpy.concatenate((sigF[:len(sigF)/2-1], sigF[len(sigF)/2:]))
+        sigF = numpy.concatenate((sigF[len(sigF)/2:], sigF[:len(sigF)/2-1]))
         self.a_y.setData(freq, sigF)
         
         sig = self.accel_data.data['z']
         sigF = abs(numpy.fft.fft(sig))
         sigF /= numpy.max(sigF)
-        sigF = numpy.concatenate((sigF[:len(sigF)/2-1], sigF[len(sigF)/2:]))
+        sigF = numpy.concatenate((sigF[len(sigF)/2:], sigF[:len(sigF)/2-1]))
         self.a_z.setData(freq, sigF)
         
         
