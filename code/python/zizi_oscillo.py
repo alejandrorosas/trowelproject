@@ -6,12 +6,8 @@ import oscillo
 
 class ZiziReader(oscillo.SensorReader):
     def __init__(self):
-        self.zizi = zizi.Zizi("/dev/ttyUSB1")
+        self.zizi = zizi.Zizi("/dev/ttyUSB0")
         self.zizi.start()
-        
-        oscillo.REFRESH_RATE = 10
-        oscillo.Y_SPAN = 5
-        oscillo.X_SPAN = 10
         
     def get_new_data(self):
         return self.zizi.get_data()
@@ -21,6 +17,10 @@ class ZiziReader(oscillo.SensorReader):
 
 if __name__ == '__main__':
     app = Qt.QApplication(sys.argv)
+    
+    oscillo.Conf.REFRESH_RATE = 100
+    oscillo.Conf.Y_SPAN = 5
+    oscillo.Conf.X_SPAN = 2
     
     reader = ZiziReader()
     demo = oscillo.Scope(reader)

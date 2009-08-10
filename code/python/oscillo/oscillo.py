@@ -7,10 +7,11 @@ import PyQt4.Qwt5 as Qwt
 import numpy
 import time
 
-REFRESH_RATE = 100
-X_SPAN = 10
-Y_SPAN = 10
-Y_CENTER = 0
+class Conf:
+    REFRESH_RATE = 100
+    X_SPAN = 10
+    Y_SPAN = 10
+    Y_CENTER = 0
 
 class SensorReader:
     new_data = {'t':numpy.array([]),
@@ -26,7 +27,7 @@ class DefaultReader(SensorReader):
         self.count = 0
     
     def get_new_data(self):
-        t = self.count * 1.0/REFRESH_RATE
+        t = self.count * 1.0/Conf.REFRESH_RATE
         x = 2*numpy.cos(2*numpy.pi*5*t) + numpy.random.randn()
         y = numpy.sin(2*numpy.pi*2*t)
         k = t-int(t)
@@ -58,7 +59,7 @@ class AccelData:
         
         #~ print "AccelData.data:", self.data
         # remove old data
-        old = numpy.max(self.data['t'])-X_SPAN
+        old = numpy.max(self.data['t'])-Conf.X_SPAN
         mask = self.data['t'] > old
         
         for k in self.data.keys():
@@ -88,8 +89,8 @@ class TimeScope(Qwt.QwtPlot):
         self.setAxisTitle(Qwt.QwtPlot.yLeft, 'a (g)')
         
         # set axis scales
-        self.setAxisScale(Qwt.QwtPlot.xBottom, 0, X_SPAN)
-        self.setAxisScale(Qwt.QwtPlot.yLeft, Y_CENTER-(Y_SPAN/2.), Y_CENTER+(Y_SPAN/2.))
+        self.setAxisScale(Qwt.QwtPlot.xBottom, 0, Conf.X_SPAN)
+        self.setAxisScale(Qwt.QwtPlot.yLeft, Conf.Y_CENTER-(Conf.Y_SPAN/2.), Conf.Y_CENTER+(Conf.Y_SPAN/2.))
         
         # insert a few curves
         self.a_x = Qwt.QwtPlotCurve('a_x')
@@ -105,7 +106,7 @@ class TimeScope(Qwt.QwtPlot):
         # add a Timer
         timer = Qt.QTimer(self)
         timer.connect(timer, Qt.SIGNAL('timeout()'), self.refresh)
-        timer.start(1000./REFRESH_RATE)
+        timer.start(1000./Conf.REFRESH_RATE)
         
         # replot
         self.replot()
@@ -127,8 +128,9 @@ class TimeScope(Qwt.QwtPlot):
         else:
             max = numpy.max(self.accel_data.data['t'])
         
-        if max > X_SPAN:
-            self.setAxisScale(Qwt.QwtPlot.xBottom, max-X_SPAN, max)
+        if max > Conf.X_SPAN:
+            self.setAxisScale(Qwt.QwtPlot.xBottom, max-Conf.X_SPAN, max)
+        
         self.replot()
 
 # class TimePlot
@@ -184,7 +186,7 @@ class FreqScope(Qwt.QwtPlot):
         # add a Timer
         timer = Qt.QTimer(self)
         timer.connect(timer, Qt.SIGNAL('timeout()'), self.refresh)
-        timer.start(10*1000./REFRESH_RATE)
+        timer.start(10*1000./Conf.REFRESH_RATE)
         
     def refresh(self):
         # TODO
