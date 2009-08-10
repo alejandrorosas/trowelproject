@@ -53,17 +53,17 @@ class AccelData:
     def refresh(self):
         # add data from reader
         new_data = self.reader.get_new_data()
-        #~ print "new data=", new_data
+        
         for k in self.data.keys():
             self.data[k] = numpy.append(self.data[k], new_data[k])
         
-        #~ print "AccelData.data:", self.data
         # remove old data
-        old = numpy.max(self.data['t'])-Conf.X_SPAN
-        mask = self.data['t'] > old
+        if len(self.data['t'])>0:
+            old = numpy.max(self.data['t'])-Conf.X_SPAN
+            mask = self.data['t'] > old
         
-        for k in self.data.keys():
-            self.data[k] = self.data[k][mask]
+            for k in self.data.keys():
+                self.data[k] = self.data[k][mask]
 
 class TimeScope(Qwt.QwtPlot):
     
