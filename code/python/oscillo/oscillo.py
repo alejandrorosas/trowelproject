@@ -27,9 +27,13 @@ class DefaultReader(SensorReader):
     
     def get_new_data(self):
         t = self.count/float(REFRESH_RATE)/10
-        x = numpy.cos(2*numpy.pi*5*t)
+        x = 2*numpy.cos(2*numpy.pi*5*t) + numpy.random.randn()
         y = numpy.sin(2*numpy.pi*2*t)
-        z = numpy.tan(2*numpy.pi*3*t)
+        k = t-int(t)
+        if k<0.5:
+            z = -1
+        else:
+            z = 1
         self.count += 1
         return {'t':t, 'x':x, 'y':y, 'z':z}
 
@@ -183,10 +187,30 @@ class FreqScope(Qwt.QwtPlot):
         timer.start(REFRESH_RATE)
         
     def refresh(self):
-        # update the data
-        self.accel_data.refresh()
-        
         # TODO
+        sig = self.accel_data.data['x']
+        t = self.accel_data.data['t']
+        dt = numpy.average(t[1:]-t[:-1])
+        
+        freq = numpy.fft.fftfreq(len(sig), dt)
+        freq = numpy.concatenate((freq[:len(freq)/2-1], freq[len(freq)/2:]))
+        sigF = abs(numpy.fft.fft(sig))
+        sigF /= numpy.max(sigF)
+        sigF = numpy.concatenate((sigF[:len(sigF)/2-1], sigF[len(sigF)/2:]))
+        self.a_x.setData(freq, sigF)
+        
+        sig = self.accel_data.data['y']
+        sigF = abs(numpy.fft.fft(sig))
+        sigF /= numpy.max(sigF)
+        sigF = numpy.concatenate((sigF[:len(sigF)/2-1], sigF[len(sigF)/2:]))
+        self.a_y.setData(freq, sigF)
+        
+        sig = self.accel_data.data['z']
+        sigF = abs(numpy.fft.fft(sig))
+        sigF /= numpy.max(sigF)
+        sigF = numpy.concatenate((sigF[:len(sigF)/2-1], sigF[len(sigF)/2:]))
+        self.a_z.setData(freq, sigF)
+        
         
         self.replot()
         
