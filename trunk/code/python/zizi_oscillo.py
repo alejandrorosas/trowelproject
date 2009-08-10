@@ -1,16 +1,29 @@
 #!/usr/bin/env python
 from PyQt4 import Qt
-import sys
 from sensor import zizi
-import oscillo
+import sys, oscillo, numpy
 
 class ZiziReader(oscillo.SensorReader):
+    
     def __init__(self):
-        self.zizi = zizi.Zizi("/dev/ttyUSB0")
+        self.zizi = zizi.Zizi("/dev/ttyUSB2")
         self.zizi.start()
+        self.data_reset()
+        self.zizi.set_callback(self.new_data)
+    
+    def data_reset(self):
+        self.data = {'t':numpy.array([]), 'x':numpy.array([]), 'y':numpy.array([]), 'z':numpy.array([])}
+    
+    def new_data(self, dict):
+        self.data['t'] = numpy.append(self.data['t'], dict['t'])
+        self.data['x'] = numpy.append(self.data['x'], dict['x'])
+        self.data['y'] = numpy.append(self.data['y'], dict['y'])
+        self.data['z'] = numpy.append(self.data['z'], dict['z'])
         
     def get_new_data(self):
-        return self.zizi.get_data()
+        d = self.data
+        self.data_reset()
+        return d
         
     def terminate(self):
         self.zizi.terminate()
