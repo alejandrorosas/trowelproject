@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 from PyQt4 import Qt
 from sensor import zizi
-import sys, oscillo, numpy
+import sys, oscillo.ScopeWidget as scope , numpy
 
-class ZiziReader(oscillo.SensorReader):
+class ZiziReader(scope.SensorReader):
     
     def __init__(self):
-        self.zizi = zizi.Zizi("/dev/ttyUSB2")
+        self.zizi = zizi.Zizi("/dev/ttyUSB1")
         self.zizi.start()
         self.data_reset()
         self.zizi.set_callback(self.new_data)
@@ -23,7 +23,7 @@ class ZiziReader(oscillo.SensorReader):
     def get_new_data(self):
         d = self.data
         self.data_reset()
-        return d
+        return (d['t'], d['x'])
         
     def terminate(self):
         self.zizi.terminate()
@@ -31,12 +31,8 @@ class ZiziReader(oscillo.SensorReader):
 if __name__ == '__main__':
     app = Qt.QApplication(sys.argv)
     
-    oscillo.Conf.REFRESH_RATE = 100
-    oscillo.Conf.Y_SPAN = 5
-    oscillo.Conf.X_SPAN = 2
-    
     reader = ZiziReader()
-    demo = oscillo.Scope(reader)
+    demo = scope.Scope(reader=reader)
     demo.resize(500, 300)
     demo.show()
     

@@ -60,10 +60,10 @@ class AccelData:
         # remove old data
         if len(self.data['t'])>0:
             old = numpy.max(self.data['t'])-Conf.X_SPAN
-            mask = self.data['t'] > old
+            old_ix = numpy.where(self.data['t']>old)[0][0] 
         
             for k in self.data.keys():
-                self.data[k] = self.data[k][mask]
+                self.data[k] = self.data[k][old_ix:]
 
 class TimeScope(Qwt.QwtPlot):
     
