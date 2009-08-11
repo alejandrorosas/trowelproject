@@ -28,17 +28,17 @@
      <height>301</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QHBoxLayout" name="scopeHbox">
     <property name="sizeConstraint">
      <enum>QLayout::SetMaximumSize</enum>
     </property>
     <item>
-     <widget class="QwtPlot" name="qwtPlot"/>
+     <widget class="QwtPlot" name="plot"/>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
+     <layout class="QVBoxLayout" name="menu">
       <item>
-       <spacer name="verticalSpacer">
+       <spacer name="menuspacer">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
@@ -51,9 +51,9 @@
        </spacer>
       </item>
       <item>
-       <layout class="QGridLayout" name="gridLayout">
+       <layout class="QGridLayout" name="menugrid">
         <item row="0" column="0">
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="timediv">
           <property name="lineWidth">
            <number>1</number>
           </property>
@@ -66,13 +66,13 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QwtSlider" name="Slider"/>
+         <widget class="QwtSlider" name="timedivslider" native="true"/>
         </item>
         <item row="0" column="2">
-         <widget class="QLCDNumber" name="lcdNumber_2"/>
+         <widget class="QLCDNumber" name="timedivlcd"/>
         </item>
         <item row="0" column="3">
-         <widget class="QLabel" name="label_4">
+         <widget class="QLabel" name="timedivunit">
           <property name="text">
            <string>s/div</string>
           </property>
@@ -85,7 +85,7 @@
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="label_2">
+         <widget class="QLabel" name="sigdiv">
           <property name="text">
            <string>SigDiv</string>
           </property>
@@ -95,13 +95,13 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QwtSlider" name="Slider_2"/>
+         <widget class="QwtSlider" name="sigdivslider" native="true"/>
         </item>
         <item row="1" column="2">
-         <widget class="QLCDNumber" name="lcdNumber_3"/>
+         <widget class="QLCDNumber" name="sigdivlcd"/>
         </item>
         <item row="1" column="3">
-         <widget class="QLabel" name="label_5">
+         <widget class="QLabel" name="sigdivunit">
           <property name="text">
            <string>g/div</string>
           </property>
@@ -114,7 +114,7 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QLabel" name="label_3">
+         <widget class="QLabel" name="sigoff">
           <property name="text">
            <string>SigOff</string>
           </property>
@@ -124,13 +124,13 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QwtSlider" name="Slider_3"/>
+         <widget class="QwtSlider" name="sigoffslider" native="true"/>
         </item>
         <item row="2" column="2">
-         <widget class="QLCDNumber" name="lcdNumber"/>
+         <widget class="QLCDNumber" name="sigofflcd"/>
         </item>
         <item row="2" column="3">
-         <widget class="QLabel" name="label_6">
+         <widget class="QLabel" name="sigoffunit">
           <property name="text">
            <string>g</string>
           </property>
@@ -154,6 +154,7 @@
    <class>QwtPlot</class>
    <extends>QFrame</extends>
    <header>qwt_plot.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>QwtSlider</class>
