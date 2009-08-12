@@ -40,15 +40,15 @@ void lis302_init(void) {
   
 }
 
-int lis302_getx(void) {
+int8_t lis302_getx(void) {
   int a = read_reg(REG_OUTX);
   return a > 127 ? a-256:a;
 }
-int lis302_gety(void) {
+int8_t lis302_gety(void) {
   int a = read_reg(REG_OUTY);
   return a > 127 ? a-256:a;
 }
-int lis302_getz(void) {
+int8_t lis302_getz(void) {
   int a = read_reg(REG_OUTZ);
   return a > 127 ? a-256:a;
 }
