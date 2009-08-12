@@ -2,8 +2,8 @@
 #define _LIS303_H
 
 void lis302_init(void);
-int lis302_getx(void);
-int lis302_gety(void);
-int lis302_getz(void);
+int8_t lis302_getx(void);
+int8_t lis302_gety(void);
+int8_t lis302_getz(void);
 
 #endif

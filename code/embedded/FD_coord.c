@@ -10,35 +10,26 @@
 #include "timer.h"
 #include "uart.h"
 
-#define EVENT_NONE 0
-#define EVENT_SEND 1
-#define EVENT_SENT 2
-#define EVENT_RX   3
 
-volatile int event = 0;
 uint16_t rx_from;
+#define SAMPLE_NUM 12
 struct msg {
   uint32_t t;
-  int16_t x, y, z;
+  int8_t x[SAMPLE_NUM], y[SAMPLE_NUM], z[SAMPLE_NUM];
 } rx_msg;
 
 int putchar(int c) {
   return uart_putchar(c);
 }
 
-int send(void) {
-  event = EVENT_SEND;
-  return 1;
-}
-
-int sent() {
-  event = EVENT_SENT;
-  return 1;
-}
-
 int rx() {
-  event = EVENT_RX;
-  return 1;
+  int len, i;
+  len = csma_read(&rx_from, &rx_msg, sizeof(rx_msg));
+  leds_toggle(LED_RED);
+  for (i=0; i<SAMPLE_NUM; i++) {
+    printf("t=%lu, x=%i, y=%i, z=%i\n", rx_msg.t, rx_msg.x[i], rx_msg.y[i], rx_msg.z[i]);
+  }
+  return 0;
 }
 
 int main(void) {
@@ -55,30 +46,14 @@ int main(void) {
   leds_off(LEDS_ALL);
   
   csma_init();
-  csma_set_tx_cb(sent);
   csma_set_rx_cb(rx);
   
   leds_on(LEDS_ALL);
   
   uart_init();
   
-  int len;
   while (1) {
-    event = 0;
     LPM0;
-    switch (event) {
-    case EVENT_SEND:
-      //~ csma_send(CSMA_BROADCAST, msg, strlen(msg));
-      break;
-    case EVENT_SENT:
-      leds_toggle(LED_GREEN);
-      break;
-    case EVENT_RX:
-      len = csma_read(&rx_from, &rx_msg, sizeof(rx_msg));
-      leds_toggle(LED_RED);
-      printf("t=%lu, x=%i, y=%i, z=%i\n", rx_msg.t, rx_msg.x, rx_msg.y, rx_msg.z);
-      break;
-    }
   }
     
   return 0;
