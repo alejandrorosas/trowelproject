@@ -12,7 +12,7 @@ class DummyReader(SensorReader):
         self.t_i = time.time()
     def get_new_data(self):
         t = time.time()-self.t_i
-        return ([t], [numpy.cos(2*numpy.pi*t)])
+        return ([t], [numpy.cos(2*numpy.pi*t) + 0.5*numpy.random.randn()])
 
 class Scope(QtGui.QWidget):    
     
@@ -59,7 +59,7 @@ class Scope(QtGui.QWidget):
         #create a timer
         self.timer = Qt.QTimer(self)
         self.connect(self.timer, Qt.SIGNAL('timeout()'), self.get_new_data)
-        self.timer.refreshRate = 10
+        self.timer.refreshRate = 100
         self.timer.start(1000/self.timer.refreshRate)
         
         # create the right side panel menu

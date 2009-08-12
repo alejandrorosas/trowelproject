@@ -192,6 +192,10 @@ class FreqScope(Qwt.QwtPlot):
         # TODO
         sig = self.accel_data.data['x']
         t = self.accel_data.data['t']
+        
+        if len(t) < 2:
+            return
+        
         dt = numpy.average(t[1:]-t[:-1])
         
         freq = numpy.fft.fftfreq(len(sig), dt)
