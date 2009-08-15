@@ -1,45 +1,33 @@
 #!/usr/bin/env python
 from sensor.wiimote import *
-import cwiid,sys,time
+import sys,time
 
-wiimote = giveMeAWiimote()
+from sensor import wiimote
 
-for a in range(3, -1, -1):
-    time.sleep(1)
-    print 'starting in %i s'%a
-
-data=[]
-time_init=time.time()
-
-def callback(msgs):
-    for msg in msgs:
-        if msg[0]==cwiid.MESG_ACC:
-            data.append((time.time()-time_init,msg[1]))
-            #print "callback"
-
-wiimote.set_msg_callback(callback)
+reader = wiimote.WiimoteReader()
 
 c='a'
 while c<>'q':
     print "Tapez q<ENTREE> pour quitter"
     c = sys.stdin.read(1)
 
-print len(data)
-wiimote.close()
+reader.terminate()
+
+data = reader.get_new_data()
 
 f = open("result.csv",'w')
 csv=u"t;raw ax;raw ay;raw az\n"
 f.write(csv)
 
-for t,r in data:
+for i in range(len(data['t'])):
     #~ print "%f:"%t, d
-    csv=("%f"%t).replace(".",",")
+    csv=("%f"%data['t'][i]).replace(".",",")
     csv+=u';'
-    csv+=("%d"%r[0]).replace(".",",")
+    csv+=("%d"%data['x'][i]).replace(".",",")
     csv+=u';'
-    csv+=("%d"%r[1]).replace(".",",")
+    csv+=("%d"%data['y'][i]).replace(".",",")
     csv+=u';'
-    csv+=("%d"%r[2]).replace(".",",")
+    csv+=("%d"%data['z'][i]).replace(".",",")
     csv+=u"\n"
     f.write(csv)
 
