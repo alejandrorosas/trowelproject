@@ -2,7 +2,13 @@
 #include <signal.h>
 
 #include "spi.h"
+#include "i2c.h"
 #include "lis302.h"
+
+// comment the next line for SPI mode
+#define MODE_I2C
+
+#define LIS_ADDR 0x1C
 
 #define READ_BIT 0x80
 #define MULTIPLE_BIT 0x40
@@ -23,48 +29,74 @@
 #define CTRL1_YEN   0x02 // Y enable
 #define CTRL1_XEN   0x01 // X enable
 
-uint8_t iam;
+#define CTRL2_REBOOT 0x40
 
 static void inline write_reg(uint8_t addr, uint8_t value);
 static uint8_t inline read_reg(uint8_t addr);
 
 void lis302_init(void) {
-  spi_init();
-  
-  write_reg(REG_CTRL2, 0x40);
-  write_reg(REG_CTRL1, CTRL1_EN | CTRL1_XEN | CTRL1_YEN | CTRL1_ZEN);
-  iam = read_reg(REG_CTRL1);
-  
-  iam = read_reg(REG_STATUS);
-  iam = read_reg(REG_OUTX);
-  
+    uint8_t iam;
+#ifdef MODE_I2C
+    i2c_init();
+#else
+    spi_init();
+#endif
+    
+    // reboot device
+    write_reg(REG_CTRL2, CTRL2_REBOOT);
+    
+    iam = read_reg(REG_WHOAMI); // should read 0x3B
+    if (iam != 0x3B) {
+        // error
+        return -1;
+    }
+    
+    write_reg(REG_CTRL1, CTRL1_EN | CTRL1_XEN | CTRL1_YEN | CTRL1_ZEN);
+    
+    return 0;
 }
 
 int8_t lis302_getx(void) {
-  int a = read_reg(REG_OUTX);
-  return a > 127 ? a-256:a;
+    int a = read_reg(REG_OUTX);
+    return a > 127 ? a-256:a;
 }
 int8_t lis302_gety(void) {
-  int a = read_reg(REG_OUTY);
-  return a > 127 ? a-256:a;
+    int a = read_reg(REG_OUTY);
+    return a > 127 ? a-256:a;
 }
 int8_t lis302_getz(void) {
-  int a = read_reg(REG_OUTZ);
-  return a > 127 ? a-256:a;
+    int a = read_reg(REG_OUTZ);
+    return a > 127 ? a-256:a;
 }
 
+#ifdef MODE_I2C
 static void inline write_reg(uint8_t addr, uint8_t value) {
-  spi_accel_select();
-  spi_write_single(addr & 0x3F);
-  spi_write_single(value);
-  spi_accel_deselect();
+    uint8_t data[2];
+    data[0] = addr;
+    data[1] = value;
+    i2c_write(LIS_ADDR, data, 2);
+}
+
+static uint8_t inline read_reg(uint8_t addr) {
+    uint8_t val;
+    
+    i2c_write_read(LIS_ADDR, addr, &val, 1);
+    return val;
+}
+
+#else
+static void inline write_reg(uint8_t addr, uint8_t value) {
+    spi_accel_select();
+    spi_write_single(addr & 0x3F);
+    spi_write_single(value);
+    spi_accel_deselect();
 }
 static uint8_t inline read_reg(uint8_t addr) {
-  uint8_t ret;
-  spi_accel_select();
-  spi_write_single( (addr & 0x3F) | READ_BIT);
-  ret = spi_read_single();
-  spi_accel_deselect();
-  return ret;
+    uint8_t ret;
+    spi_accel_select();
+    spi_write_single( (addr & 0x3F) | READ_BIT);
+    ret = spi_read_single();
+    spi_accel_deselect();
+    return ret;
 }
-  
+#endif

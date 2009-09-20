@@ -9,8 +9,25 @@
   #define NULL 0x0
 #endif
 
+#define MODE_NONE 0x0
+#define MODE_UART 0x1
+#define MODE_SPI  0x2
+#define MODE_I2C  0x3
+
 uint8_t spi_last_read;
 int spi_last_config;
+
+static int uca_mode = MODE_NONE;
+static int ucb_mode = MODE_NONE;
+
+#define SCL_LINE 0x2
+#define SDA_LINE 0x4
+
+#define ERR_MODE      -1
+#define ERR_BUS_BUSY  -2
+#define ERR_I2C_BUSY  -3
+#define ERR_ADDR_NACK -4
+#define ERR_DATA_NACK -5
 
 void i2c_init(void) {
     // set UCSWRST
@@ -23,12 +40,12 @@ void i2c_init(void) {
     P3OUT |= 1;
     
     P3DIR |= 0x0F; // default to OUT
-    P3SEL |= 0x06; // Select SDA & SCL for I2C
+    P3SEL |= SCL_LINE | SDA_LINE; // Select SDA & SCL for I2C
     
     // configure all registers
     UCB0CTL0 = UCMST | UCMODE_3 | UCSYNC;
     UCB0CTL1 = UCSSEL_SMCLK | UCSWRST;
-    UCB0BR0 = 10; // 1MHz/10 = 100kHz
+    UCB0BR0 = 3; // 1MHz/10 = 100kHz
     UCB0BR1 = 0;
     
     UCB0I2CIE &= ~(0xF); // no interrupt
@@ -36,59 +53,104 @@ void i2c_init(void) {
     
     // clear UCSWRST
     UCB0CTL1 &= ~(UCSWRST);
+    
+    ucb_mode = MODE_I2C;
 }
 
 int16_t i2c_write(uint8_t addr, const uint8_t* data, int16_t len) {
     int16_t i;
     
+    // check configuration
+    if (ucb_mode != MODE_I2C) {
+        // mode not I2C
+        return ERR_MODE;
+    }
+    
+    if ( (UCB0STAT & UCBBUSY) || (UCB0STAT & UCSCLLOW) ) {
+        // bus busy
+        return ERR_I2C_BUSY;
+    }
+    
     // write address
     UCB0I2CSA = addr;
-    // set transmitter and start condition
-    UCB0CTL1 |= UCTR + UCTXSTT;
     
-    for (i=0; i<len; i++) {
-        // wait for ACK or NACK
-        while ( ((IFG2 & UCB0TXIFG) == 0) && ((UCB0STAT & UCNACKIFG) == 0) ) ;
+    // set transmitter and start condition
+    UCB0CTL1 |= (UCTR | UCTXSTT);
+    
+    // wait for TXBUF ready
+    while ( (IFG2 & UCB0TXIFG) == 0 ) ;
+    
+    // write first byte
+    UCB0TXBUF = data[0];
+    
+    // wait for ACK or NACK (end of STT)
+    while (UCB0CTL1 & UCTXSTT);
+    if (UCB0STAT & UCNACKIFG) {
+        // got address NACK
+        // set stop condition
+        UCB0CTL1 |= UCTXSTP;
+        // wait end of STP
+        while (UCB0CTL1 & UCTXSTP);
+        return ERR_ADDR_NACK;
+    }
+    
+    for (i=1;i<len;i++) {
+        // wait for ACK/NACK
+        while ( !(IFG2 & UCB0TXIFG) && !(UCB0STAT & UCNACKIFG) );
         if (UCB0STAT & UCNACKIFG) {
-            // got NACK, abort
-            // send STOP
+            // got data NACK
+            // set stop condition
             UCB0CTL1 |= UCTXSTP;
+            // wait end of STP
             while (UCB0CTL1 & UCTXSTP);
-            return -1-i;
+            return ERR_DATA_NACK;
         }
-        // write next byte
+        // send byte
         UCB0TXBUF = data[i];
     }
     
-    // wait for ACK or NACK
-    while ( ((IFG2 & UCB0TXIFG) == 0) && ((UCB0STAT & UCNACKIFG) == 0) ) ;
-    
-    // all bytes sent, set stop condition
+    // last data byte has been written
+    // set STP
     UCB0CTL1 |= UCTXSTP;
+    // clear TX IFG
+    IFG2 &= ~UCB0TXIFG;
     
     // wait until STP sent
     while (UCB0CTL1 & UCTXSTP);
     
-    return 0;
+    return len;
 }
 
 int16_t i2c_read (uint8_t addr, uint8_t* data, int16_t len) {
     int16_t i;
     
+    // check configuration
+    if (ucb_mode != MODE_I2C) {
+        // mode not I2C
+        return ERR_MODE;
+    }
+    
+    if ( (UCB0STAT & UCBBUSY)  || (UCB0STAT & UCSCLLOW) ) {
+        // bus busy
+        return ERR_I2C_BUSY;
+    }
+    
     // write address
     UCB0I2CSA = addr;
+    
     // set receiver and start condition
     UCB0CTL1 &= ~(UCTR);
     UCB0CTL1 |= UCTXSTT;
     
-    // wait for ACK or NACK
+    // wait for ACK or NACK (end of STT)
     while (UCB0CTL1 & UCTXSTT) ;
     if (UCB0STAT & UCNACKIFG) {
-        // got NACK, abort
-        // send STOP
+        // got address NACK
+        // set stop condition
         UCB0CTL1 |= UCTXSTP;
+        // wait end of STP
         while (UCB0CTL1 & UCTXSTP);
-        return -1;
+        return ERR_ADDR_NACK;
     }
     
     for (i=0; i<len-1; i++) {
@@ -98,13 +160,13 @@ int16_t i2c_read (uint8_t addr, uint8_t* data, int16_t len) {
         data[i] = UCB0RXBUF;
     }
     
+    // reading last byte, set stop condition
+    UCB0CTL1 |= UCTXSTP;
+    
     // wait for data
     while (!(IFG2 & UCB0RXIFG));
-    // read last byte
-    data[len-1] = UCB0RXBUF;
-    
-    // all bytes but one read, set stop condition
-    UCB0CTL1 |= UCTXSTP;
+    // read next byte
+    data[i] = UCB0RXBUF;
     
     // wait until STP sent
     while (UCB0CTL1 & UCTXSTP);
@@ -112,65 +174,79 @@ int16_t i2c_read (uint8_t addr, uint8_t* data, int16_t len) {
     return 0;
     
 }
-uint8_t val;
+
 int16_t i2c_write_read(uint8_t addr, uint8_t data_w, uint8_t* data_r, int16_t len) {
     int16_t i;
     
+    // check configuration
+    if (ucb_mode != MODE_I2C) {
+        // mode not I2C
+        return ERR_MODE;
+    }
+    
+    if ( (UCB0STAT & UCBBUSY)  || (UCB0STAT & UCSCLLOW) ) {
+        // bus busy
+        return ERR_I2C_BUSY;
+    }
     
     // write address
     UCB0I2CSA = addr;
     // set transmitter and start condition
-    UCB0CTL1 |= UCTR + UCTXSTT;
+    UCB0CTL1 |= (UCTR | UCTXSTT);
     
-    // wait for ACK or NACK
-    while ( ((IFG2 & UCB0TXIFG) == 0) && ((UCB0STAT & UCNACKIFG) == 0) ) ;
-    if (UCB0STAT & UCNACKIFG) {
-        // got NACK, abort
-        // send STOP
-        UCB0CTL1 |= UCTXSTP;
-        while (UCB0CTL1 & UCTXSTP);
-        return -1;
-    }
+    // wait for TXBUF ready
+    while ( (IFG2 & UCB0TXIFG) == 0 ) ;
     
     // write byte
     UCB0TXBUF = data_w;
+    
+    // wait for ACK or NACK (end of STT)
+    while (UCB0CTL1 & UCTXSTT);
+    
+    if (UCB0STAT & UCNACKIFG) {
+        // got address NACK
+        // set stop condition
+        UCB0CTL1 |= UCTXSTP;
+        // wait end of STP
+        while (UCB0CTL1 & UCTXSTP);
+        return ERR_ADDR_NACK;
+    }
     
     // set receiver
     UCB0CTL1 &= ~UCTR;
     // set start condition
     UCB0CTL1 |= UCTXSTT;
-    // clear TX buf
-    UCB0TXBUF = 0;
+    // clear TX IFG
+    IFG2 &= ~UCB0TXIFG;
     
     // we should be in receive state, wait for end of STT
     while (UCB0CTL1 & UCTXSTT) ;
     
     if (UCB0STAT & UCNACKIFG) {
-        // we got NACK after restart
-        // send STOP
+        // got address NACK
+        // set stop condition
         UCB0CTL1 |= UCTXSTP;
-        while (UCB0CTL1 & UCTXSTP);
-        return -2;
+        // wait end of STP
+        while (UCB0CTL1&UCTXSTP);
+        return ERR_ADDR_NACK;
     }
     
     for (i=0; i<len-1; i++) {
         // wait for data
         while (!(IFG2 & UCB0RXIFG));
         // read next byte
-        val = UCB0RXBUF;
-        data_r[i] = val;
+        data_r[i] = UCB0RXBUF;
     }
     
-    // all bytes but one read, set stop condition
+    
+    // reading last byte, set stop condition
     UCB0CTL1 |= UCTXSTP;
     
-    // wait for last byte
-    while (!(IFG2 & UCB0RXIFG));
+    // wait for RX data ready
+    while ((IFG2 & UCB0RXIFG) == 0) ;
+    data_r[i] = UCB0RXBUF;
     
-    // read last byte
-    val = UCB0RXBUF;
-    data_r[len-1] = val;
-        
+    
     // wait until STP sent
     while (UCB0CTL1 & UCTXSTP);
     
@@ -211,11 +287,18 @@ void spi_init(void) {
     IE2 &= ~(UCB0TXIE | UCB0RXIE);
 
     spi_last_config = 0;
+    
+    ucb_mode = MODE_SPI;
 }
 
 int spi_write(const uint8_t* data, int len) {
     int i;
     uint8_t dummy;
+    
+    // check configuration
+    if (ucb_mode != MODE_SPI) {
+        return -1;
+    }
 
     if ( UCB0STAT & UCBUSY )
         return 0;
@@ -289,9 +372,12 @@ void uart_init(void) {
     UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
     IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
     eint();
+    
+    uca_mode = MODE_UART;
 }
 
 int uart_putchar(int c) {
+    
     UCA0TXBUF = (char) c;
     while (!(IFG2&UCA0TXIFG));
     return c;

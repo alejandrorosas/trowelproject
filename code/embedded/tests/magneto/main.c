@@ -11,6 +11,16 @@ int putchar(int c) {
   return uart_putchar(c);
 }
 
+int16_t x,y,z;
+
+static inline void micro_delay(register unsigned int n) {
+    __asm__ __volatile__ (
+  "1: \n"
+  " dec %[n] \n"
+  " jne 1b \n"
+        : [n] "+r"(n));
+}
+
 int main(void) {
     WDTCTL = WDTPW + WDTHOLD; // Stop watchdog timer
     eint();
@@ -29,9 +39,18 @@ int main(void) {
     printf("HMC5843 test program\n");
     
     if (hmc5843_init()<0) {
+        printf("HMC5843 init error\n");
         LPM4;
-    } else {
-        LPM3;
+    }
+    
+    while (1) {
+        int i;
+        for (i=0;i<20;i++) micro_delay(0xFFFF);
+        if ( hmc5843_getXYZ(&x, &y, &z)<0 ) {
+            printf("HMC5843 read error\n");
+        } else {
+            printf("X=%i,Y=%i, Z=%i\n", x, y, z);
+        }
     }
     
     while (1) {
