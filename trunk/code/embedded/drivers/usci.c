@@ -3,6 +3,7 @@
 
 #include "spi.h"
 #include "uart.h"
+#include "i2c.h"
 
 #ifndef NULL
   #define NULL 0x0
@@ -11,56 +12,223 @@
 uint8_t spi_last_read;
 int spi_last_config;
 
+void i2c_init(void) {
+    // set UCSWRST
+    UCB0CTL1 = UCSWRST;
+    
+    // configure ports
+    // cc2500 chis select high
+    P3SEL &= ~1;
+    P3DIR |= 1;
+    P3OUT |= 1;
+    
+    P3DIR |= 0x0F; // default to OUT
+    P3SEL |= 0x06; // Select SDA & SCL for I2C
+    
+    // configure all registers
+    UCB0CTL0 = UCMST | UCMODE_3 | UCSYNC;
+    UCB0CTL1 = UCSSEL_SMCLK | UCSWRST;
+    UCB0BR0 = 10; // 1MHz/10 = 100kHz
+    UCB0BR1 = 0;
+    
+    UCB0I2CIE &= ~(0xF); // no interrupt
+    IE2 &= ~(0xC); // no interrupt
+    
+    // clear UCSWRST
+    UCB0CTL1 &= ~(UCSWRST);
+}
+
+int16_t i2c_write(uint8_t addr, const uint8_t* data, int16_t len) {
+    int16_t i;
+    
+    // write address
+    UCB0I2CSA = addr;
+    // set transmitter and start condition
+    UCB0CTL1 |= UCTR + UCTXSTT;
+    
+    for (i=0; i<len; i++) {
+        // wait for ACK or NACK
+        while ( ((IFG2 & UCB0TXIFG) == 0) && ((UCB0STAT & UCNACKIFG) == 0) ) ;
+        if (UCB0STAT & UCNACKIFG) {
+            // got NACK, abort
+            // send STOP
+            UCB0CTL1 |= UCTXSTP;
+            while (UCB0CTL1 & UCTXSTP);
+            return -1-i;
+        }
+        // write next byte
+        UCB0TXBUF = data[i];
+    }
+    
+    // wait for ACK or NACK
+    while ( ((IFG2 & UCB0TXIFG) == 0) && ((UCB0STAT & UCNACKIFG) == 0) ) ;
+    
+    // all bytes sent, set stop condition
+    UCB0CTL1 |= UCTXSTP;
+    
+    // wait until STP sent
+    while (UCB0CTL1 & UCTXSTP);
+    
+    return 0;
+}
+
+int16_t i2c_read (uint8_t addr, uint8_t* data, int16_t len) {
+    int16_t i;
+    
+    // write address
+    UCB0I2CSA = addr;
+    // set receiver and start condition
+    UCB0CTL1 &= ~(UCTR);
+    UCB0CTL1 |= UCTXSTT;
+    
+    // wait for ACK or NACK
+    while (UCB0CTL1 & UCTXSTT) ;
+    if (UCB0STAT & UCNACKIFG) {
+        // got NACK, abort
+        // send STOP
+        UCB0CTL1 |= UCTXSTP;
+        while (UCB0CTL1 & UCTXSTP);
+        return -1;
+    }
+    
+    for (i=0; i<len-1; i++) {
+        // wait for data
+        while (!(IFG2 & UCB0RXIFG));
+        // read next byte
+        data[i] = UCB0RXBUF;
+    }
+    
+    // wait for data
+    while (!(IFG2 & UCB0RXIFG));
+    // read last byte
+    data[len-1] = UCB0RXBUF;
+    
+    // all bytes but one read, set stop condition
+    UCB0CTL1 |= UCTXSTP;
+    
+    // wait until STP sent
+    while (UCB0CTL1 & UCTXSTP);
+    
+    return 0;
+    
+}
+uint8_t val;
+int16_t i2c_write_read(uint8_t addr, uint8_t data_w, uint8_t* data_r, int16_t len) {
+    int16_t i;
+    
+    
+    // write address
+    UCB0I2CSA = addr;
+    // set transmitter and start condition
+    UCB0CTL1 |= UCTR + UCTXSTT;
+    
+    // wait for ACK or NACK
+    while ( ((IFG2 & UCB0TXIFG) == 0) && ((UCB0STAT & UCNACKIFG) == 0) ) ;
+    if (UCB0STAT & UCNACKIFG) {
+        // got NACK, abort
+        // send STOP
+        UCB0CTL1 |= UCTXSTP;
+        while (UCB0CTL1 & UCTXSTP);
+        return -1;
+    }
+    
+    // write byte
+    UCB0TXBUF = data_w;
+    
+    // set receiver
+    UCB0CTL1 &= ~UCTR;
+    // set start condition
+    UCB0CTL1 |= UCTXSTT;
+    // clear TX buf
+    UCB0TXBUF = 0;
+    
+    // we should be in receive state, wait for end of STT
+    while (UCB0CTL1 & UCTXSTT) ;
+    
+    if (UCB0STAT & UCNACKIFG) {
+        // we got NACK after restart
+        // send STOP
+        UCB0CTL1 |= UCTXSTP;
+        while (UCB0CTL1 & UCTXSTP);
+        return -2;
+    }
+    
+    for (i=0; i<len-1; i++) {
+        // wait for data
+        while (!(IFG2 & UCB0RXIFG));
+        // read next byte
+        val = UCB0RXBUF;
+        data_r[i] = val;
+    }
+    
+    // all bytes but one read, set stop condition
+    UCB0CTL1 |= UCTXSTP;
+    
+    // wait for last byte
+    while (!(IFG2 & UCB0RXIFG));
+    
+    // read last byte
+    val = UCB0RXBUF;
+    data_r[len-1] = val;
+        
+    // wait until STP sent
+    while (UCB0CTL1 & UCTXSTP);
+    
+    return 0;
+    
+}
+
+
 void spi_init(void) {
   
-  /* configure all SPI related pins */
-  P3DIR |= (1<<1) | (1<<3);
-  P3DIR &= ~(1<<2);
+    /* configure all SPI related pins */
+    P3DIR |= (1<<1) | (1<<3);
+    P3DIR &= ~(1<<2);
 
-  // configure P3.0 IO for radio CSn
-  P3SEL &= ~1; // set IO
-  P3DIR |= 1; // set output
-  spi_radio_deselect();
-  
-  // configure P4.6 IO for accel CSn
-  P4SEL &= ~BV(6); // set IO
-  P4DIR |= BV(6); // set output
-  spi_accel_deselect();
-  
-  
-  /* initialize the SPI registers */
-  UCB0CTL1 = UCSWRST;
-  UCB0CTL1 = UCSSEL_SMCLK | UCSWRST;
-  UCB0CTL0 = UCCKPH | UCMSB | UCMST | UCSYNC;
-  UCB0BR0  = 0x2;
-  UCB0BR1  = 0x0;
-  
-  P3SEL |= (1<<1) | (1<<2) | (1<<3);
-  
-  UCB0CTL1 &= ~UCSWRST;
-  
-  // disable interrupts
-  IE2 &= ~(UCB0TXIE | UCB0RXIE);
-  
-  spi_last_config = 0;
+    // configure P3.0 IO for radio CSn
+    P3SEL &= ~1; // set IO
+    P3DIR |= 1; // set output
+    spi_radio_deselect();
+
+    // configure P4.6 IO for accel CSn
+    P4SEL &= ~BV(6); // set IO
+    P4DIR |= BV(6); // set output
+    spi_accel_deselect();
+
+
+    /* initialize the SPI registers */
+    UCB0CTL1 = UCSWRST;
+    UCB0CTL1 = UCSSEL_SMCLK | UCSWRST;
+    UCB0CTL0 = UCCKPH | UCMSB | UCMST | UCSYNC;
+    UCB0BR0  = 0x2;
+    UCB0BR1  = 0x0;
+
+    P3SEL |= (1<<1) | (1<<2) | (1<<3);
+
+    UCB0CTL1 &= ~UCSWRST;
+
+    // disable interrupts
+    IE2 &= ~(UCB0TXIE | UCB0RXIE);
+
+    spi_last_config = 0;
 }
 
 int spi_write(const uint8_t* data, int len) {
-  int i;
-  uint8_t dummy;
-  
-  if ( UCB0STAT & UCBUSY )
-      return 0;
+    int i;
+    uint8_t dummy;
 
-  for (i=0; i<len; i++) {
-      UCB0TXBUF = data[i];
-      while (!(IFG2 & UCB0RXIFG)) ;
-      dummy = UCB0RXBUF;
-  }
+    if ( UCB0STAT & UCBUSY )
+        return 0;
 
-  while (UCB0STAT & UCBUSY);
+    for (i=0; i<len; i++) {
+        UCB0TXBUF = data[i];
+        while (!(IFG2 & UCB0RXIFG)) ;
+        dummy = UCB0RXBUF;
+    }
 
-  return i;
+    while (UCB0STAT & UCBUSY);
+
+    return i;
 }
 
 void spi_write_single(uint8_t data) {
@@ -113,34 +281,34 @@ uint8_t spi_read_single(void) {
 }
 
 void uart_init(void) {
-  P3SEL |= 0x30;                             // P3.4,5 = USCI_A0 TXD/RXD
-  UCA0CTL1 |= UCSSEL_2;                     // SMCLK
-  UCA0BR0 = 8;                              // 1MHz 115200
-  UCA0BR1 = 0;                              // 1MHz 115200
-  UCA0MCTL = UCBRS2 + UCBRS0;               // Modulation UCBRSx = 5
-  UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
-  IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
-  eint();
+    P3SEL |= 0x30;                             // P3.4,5 = USCI_A0 TXD/RXD
+    UCA0CTL1 |= UCSSEL_2;                     // SMCLK
+    UCA0BR0 = 8;                              // 1MHz 115200
+    UCA0BR1 = 0;                              // 1MHz 115200
+    UCA0MCTL = UCBRS2 + UCBRS0;               // Modulation UCBRSx = 5
+    UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
+    IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
+    eint();
 }
 
 int uart_putchar(int c) {
-  UCA0TXBUF = (char) c;
-  while (!(IFG2&UCA0TXIFG));
-  return c;
+    UCA0TXBUF = (char) c;
+    while (!(IFG2&UCA0TXIFG));
+    return c;
 }
 
 int (*uart_cb)(int c) = 0x0;
 void uart_register_cb(int (*cb)(int c)) {
-  uart_cb = cb;
+    uart_cb = cb;
 }
 
 interrupt (USCIAB0RX_VECTOR) usci_irq(void)
 {
-  char dummy;
-  if (IFG2 & UCA0TXIFG) {
-    dummy = UCA0RXBUF;
-    if (uart_cb)
-      if (uart_cb(dummy))
-        LPM4_EXIT;
-  }
+    char dummy;
+    if (IFG2 & UCA0TXIFG) {
+        dummy = UCA0RXBUF;
+        if (uart_cb)
+            if (uart_cb(dummy))
+                LPM4_EXIT;
+    }
 }

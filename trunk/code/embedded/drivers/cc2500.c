@@ -14,7 +14,7 @@
 static int (*gdo0_cb)(void);
 static int (*gdo2_cb)(void);
 
-void inline micro_delay(register unsigned int n) {
+static inline void micro_delay(register unsigned int n) {
     __asm__ __volatile__ (
   "1: \n"
   " dec %[n] \n"

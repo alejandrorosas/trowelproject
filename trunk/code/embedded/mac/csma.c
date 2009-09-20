@@ -43,13 +43,12 @@ static const uint8_t csma_radio_reg[][2] = {
 
 static void reset_rx(void);
 static int rx_cb(void);
-static int cca_cb(void);
 static int tx_cb(void);
 
 static int (*csma_rx_cb) (void);
 static int (*csma_tx_cb) (void);
 
-uint16_t csma_addr = 0xABCD;
+uint16_t csma_addr = 0x0;
 
 static struct {
     uint8_t len;
@@ -60,22 +59,30 @@ static struct {
 
 static int rx_ready;
 
-uint8_t test;
+static inline void micro_delay(register unsigned int n) {
+    __asm__ __volatile__ (
+  "1: \n"
+  " dec %[n] \n"
+  " jne 1b \n"
+        : [n] "+r"(n));
+}
+
 void csma_init() {
+    int i;
     cc2500_init((uint8_t*) csma_radio_reg, sizeof(csma_radio_reg)/2);
     
     cc2500_gdo0_int_disable();
     cc2500_gdo2_int_disable();
-    
-    
-    test = cc2500_read_reg(CC2500_REG_FREND1);
-    
+
     rx_ready = 0;
     reset_rx();
     
-    csma_addr = (cc2500_status_rssi()<<8) + cc2500_status_rssi();
+    for (i=0;i<8;i++) {
+        micro_delay(500);
+        csma_addr |= (cc2500_status_rssi() & 0x1);
+        csma_addr <<= 1;
+    }
 }
-static uint8_t tx_fifo_bytes;
 
 int csma_send(uint16_t dest_addr, uint8_t* data, int len) {
     uint8_t tx_len, state;
@@ -84,15 +91,11 @@ int csma_send(uint16_t dest_addr, uint8_t* data, int len) {
     }
     cc2500_strobe_idle();
     
-    tx_fifo_bytes = cc2500_status_txbytes();
-    
     tx_len = len + 4;
     cc2500_write_fifo(&tx_len, 1);
     cc2500_write_fifo((uint8_t*)&csma_addr, 2);
     cc2500_write_fifo((uint8_t*)&dest_addr, 2);
     cc2500_write_fifo(data, len);
-    
-    tx_fifo_bytes = cc2500_status_txbytes();
     
     cc2500_gdo0_int_set_cb(tx_cb);
     cc2500_strobe_tx();
@@ -131,34 +134,33 @@ void csma_set_tx_cb(int (*cb) (void)) {
 }
 
 static void reset_rx() {
-  uint8_t state;
-  state = cc2500_strobe_nop();
-  
-  cc2500_strobe_idle();
-  while ( (state & CC2500_NOP_STATE_MASK) != CC2500_NOP_STATE_IDLE) {
+    uint8_t state;
     state = cc2500_strobe_nop();
-  }
-  
-  cc2500_strobe_flush_rx();
-  cc2500_strobe_flush_tx();
-  cc2500_strobe_calib();
-  
-  state = cc2500_strobe_nop();
-  while ( (state & CC2500_NOP_STATE_MASK) != CC2500_NOP_STATE_IDLE) {
+
+    cc2500_strobe_idle();
+    while ( (state & CC2500_NOP_STATE_MASK) != CC2500_NOP_STATE_IDLE) {
+        state = cc2500_strobe_nop();
+    }
+
+    cc2500_strobe_flush_rx();
+    cc2500_strobe_flush_tx();
+    cc2500_strobe_calib();
+
     state = cc2500_strobe_nop();
-  }
-  
-  cc2500_gdo0_int_clear();
-  cc2500_gdo0_int_set_falling();
-  cc2500_gdo0_int_enable();
-  cc2500_gdo0_int_set_cb(rx_cb);
-  
-  cc2500_strobe_rx();
+    while ( (state & CC2500_NOP_STATE_MASK) != CC2500_NOP_STATE_IDLE) {
+        state = cc2500_strobe_nop();
+    }
+
+    cc2500_gdo0_int_clear();
+    cc2500_gdo0_int_set_falling();
+    cc2500_gdo0_int_enable();
+    cc2500_gdo0_int_set_cb(rx_cb);
+
+    cc2500_strobe_rx();
 }
 
 
 static int rx_cb() {
-    int ret = 0;
     if (! (cc2500_status_crclqi() & CC2500_CRC_MASK) ) {
         reset_rx();
         return 0;
@@ -179,14 +181,11 @@ static int rx_cb() {
     uint8_t data[2];
     cc2500_read_fifo(data, 2);
     
-    if (csma_rx_cb) {
-        ret = csma_rx_cb();
-    }
     reset_rx();
-    return ret;
-}
-
-static int cca_cb() {
+    
+    if (csma_rx_cb) {
+        return csma_rx_cb();
+    }
     return 0;
 }
 

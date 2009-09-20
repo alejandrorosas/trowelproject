@@ -6,6 +6,7 @@ typedef int (*timer_cb)(void);
 #define TIMER_SOURCE_SMCLK 1
 #define TIMER_SOURCE_ACLK 2
 
+void timer_init(void);
 uint16_t timer_start(int source, int div);
 
 #define TIMER_ALARM_NUMBER 3

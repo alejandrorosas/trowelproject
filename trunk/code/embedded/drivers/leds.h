@@ -7,6 +7,7 @@
 
 void leds_init(void);
 void leds_set(uint16_t leds);
+uint16_t leds_get(void);
 void leds_on(uint16_t leds);
 void leds_off(uint16_t leds);
 void leds_toggle(uint16_t leds);

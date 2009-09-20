@@ -12,6 +12,10 @@ void leds_set(uint16_t leds) {
     P1OUT = (P1OUT|~LEDS_ALL) | (leds & LEDS_ALL);
 }
 
+uint16_t leds_get(void) {
+    return (P1OUT & LEDS_ALL);
+}
+
 void leds_on(uint16_t leds) {
     P1OUT |= (leds & LEDS_ALL); 
 }
