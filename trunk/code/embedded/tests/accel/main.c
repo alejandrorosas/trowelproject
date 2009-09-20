@@ -1,4 +1,5 @@
 #include <io.h>
+#include <stdio.h>
 #include <signal.h>
 #include "clock.h"
 #include "leds.h"
