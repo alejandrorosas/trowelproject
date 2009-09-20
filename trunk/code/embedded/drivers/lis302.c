@@ -34,7 +34,7 @@
 static void inline write_reg(uint8_t addr, uint8_t value);
 static uint8_t inline read_reg(uint8_t addr);
 
-void lis302_init(void) {
+int16_t lis302_init(void) {
     uint8_t iam;
 #ifdef MODE_I2C
     i2c_init();
@@ -51,8 +51,12 @@ void lis302_init(void) {
         return -1;
     }
     
-    write_reg(REG_CTRL1, CTRL1_EN | CTRL1_XEN | CTRL1_YEN | CTRL1_ZEN);
+    write_reg(REG_CTRL1, CTRL1_EN | CTRL1_FS | CTRL1_XEN | CTRL1_YEN | CTRL1_ZEN);
     
+    
+    iam = read_reg(REG_CTRL2);
+    write_reg(REG_CTRL2, 0xF);
+    iam = read_reg(REG_CTRL2);
     return 0;
 }
 
