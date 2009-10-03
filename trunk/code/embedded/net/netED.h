@@ -25,7 +25,7 @@ enum {
     SERVICE_TYPE_GYRO  = 3,
     SERVICE_TYPE_TEMP  = 4,
     SERVICE_TYPE_SERVO = 5,
-    SERVICE_TYPE_LEDS   = 6
+    SERVICE_TYPE_LEDS  = 6
 };
 
 /**
@@ -46,14 +46,12 @@ struct net_service {
 void net_add_service(struct net_service *new_service);
 
 enum {
-    SERVICE_ACCEL_X = 1,
-    SERVICE_ACCEL_Y = 2,
-    SERVICE_ACCEL_Z = 3
+    SERVICE_MOV_PARAM_X = 1,
+    SERVICE_MOV_PARAM_Y = 2,
+    SERVICE_MOV_PARAM_Z = 3,
+    SERVICE_MOV_SAMPLE  = 4
 };
 
-enum {
-    SERVICE_LEDS_GET = 4,
-    SERVICE_LEDS_SET = 5
-};
+
 
 #endif

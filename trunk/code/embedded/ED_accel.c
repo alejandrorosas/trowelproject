@@ -2,26 +2,20 @@
 #include <signal.h>
 
 #include "clock.h"
+#include "event.h"
 #include "leds.h"
 #include "timer.h"
 #include "netED.h"
-#include "lis302.h"
+
+#include "leds_service.h"
+#include "accel_service.h"
+#include "magneto_service.h"
 
 #define ALARM_TIMEOUT TIMER_ALARM_0
 
 /*--PROTOTYPES--*/
-int try_register(void);
-int registered(void);
-uint16_t accel_service_get(uint16_t param);
-void accel_service_set(uint16_t param, uint16_t config);
-uint16_t leds_service_get(uint16_t param);
-void leds_service_set(uint16_t param, uint16_t config);
-
-/*---DATA---*/
-volatile int is_registered;
-struct net_service accel_service;
-struct net_service leds_service;
-
+static int try_register(void);
+static int registered(void);
 
 int main(void) {
     // Stop watchdog timer
@@ -31,63 +25,47 @@ int main(void) {
     // configure clock
     clock_dco_set(8); // DCO 8MHz
     clock_mclk_set(CLOCK_SOURCE_DCO, 1); // MCLK 8MHz
-    clock_smclk_set(CLOCK_SOURCE_DCO, 1); // SMCLK 8MHz
+    clock_smclk_set(CLOCK_SOURCE_DCO, 8); // SMCLK 1MHz
     clock_aclk_set(1);
     
-    // init drivers
-    leds_init();
-    leds_off(LEDS_ALL);
-    lis302_init();
-    leds_on(LEDS_ALL);
+    // init event system
+    event_init();
+    
+    // init timer
     timer_init();
     timer_start(TIMER_SOURCE_ACLK, 1);
     
-    //configure accel service
-    accel_service.type = SERVICE_TYPE_ACCEL;
-    accel_service.name = "3axisAccel";
-    accel_service.get = accel_service_get;
-    accel_service.set = accel_service_set;
-    
-    //configure LEDs service
-    leds_service.type = SERVICE_TYPE_LEDS;
-    leds_service.name = "2leds";
-    leds_service.get = leds_service_get;
-    leds_service.set = leds_service_set;
-    
     // set a timeout for registration
-    
     timer_set_alarm(ALARM_TIMEOUT, 6000, 6000, TIMER_MODE_FROM_NOW, 0);
     timer_register_cb(ALARM_TIMEOUT, try_register);
     
     // start network
     net_init();
     net_set_register_cb(registered);
-    is_registered = 0;
+    net_add_service(leds_service_init());
+    net_add_service(accel_service_init());
+    net_add_service(magneto_service_init());
     net_register();
     leds_off(LED_GREEN);
     
-    // wait for network registration
-    while (!is_registered) {
-        LPM3;
-    }
-    
-    leds_off(LEDS_ALL);
-    
     // wait until end of the world
-    while (1) LPM3;
+    while (1) event_process();
     return 0;
+}
+
+int try_register_evt(void) {
+    event_post(try_register);
+    return 1;
 }
 
 int try_register(void) {
     net_register();
     leds_toggle(LED_GREEN);
-    return 0;
 }
 
 int registered(void) {
-    is_registered = 1;
     timer_unset_alarm(ALARM_TIMEOUT);
-    return 1;
+    return 0;
 }
 
 // ACCEL service
