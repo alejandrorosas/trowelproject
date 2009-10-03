@@ -30,6 +30,11 @@ static int ucb_mode = MODE_NONE;
 #define ERR_DATA_NACK -5
 
 void i2c_init(void) {
+    // if I2C already configured, return.
+    if (ucb_mode == MODE_I2C) {
+        return;
+    }
+
     // set UCSWRST
     UCB0CTL1 = UCSWRST;
     
@@ -62,8 +67,7 @@ int16_t i2c_write(uint8_t addr, const uint8_t* data, int16_t len) {
     
     // check configuration
     if (ucb_mode != MODE_I2C) {
-        // mode not I2C
-        return ERR_MODE;
+        i2c_init();
     }
     
     if ( (UCB0STAT & UCBBUSY) || (UCB0STAT & UCSCLLOW) ) {
@@ -109,11 +113,20 @@ int16_t i2c_write(uint8_t addr, const uint8_t* data, int16_t len) {
         UCB0TXBUF = data[i];
     }
     
+    // wait for ACK/NACK
+    while ( !(IFG2 & UCB0TXIFG) && !(UCB0STAT & UCNACKIFG) );
+    if (UCB0STAT & UCNACKIFG) {
+        // got data NACK
+        // set stop condition
+        UCB0CTL1 |= UCTXSTP;
+        // wait end of STP
+        while (UCB0CTL1 & UCTXSTP);
+        return ERR_DATA_NACK;
+    }
+    
     // last data byte has been written
     // set STP
     UCB0CTL1 |= UCTXSTP;
-    // clear TX IFG
-    IFG2 &= ~UCB0TXIFG;
     
     // wait until STP sent
     while (UCB0CTL1 & UCTXSTP);
@@ -126,8 +139,7 @@ int16_t i2c_read (uint8_t addr, uint8_t* data, int16_t len) {
     
     // check configuration
     if (ucb_mode != MODE_I2C) {
-        // mode not I2C
-        return ERR_MODE;
+        i2c_init();
     }
     
     if ( (UCB0STAT & UCBBUSY)  || (UCB0STAT & UCSCLLOW) ) {
@@ -180,8 +192,7 @@ int16_t i2c_write_read(uint8_t addr, uint8_t data_w, uint8_t* data_r, int16_t le
     
     // check configuration
     if (ucb_mode != MODE_I2C) {
-        // mode not I2C
-        return ERR_MODE;
+        i2c_init();
     }
     
     if ( (UCB0STAT & UCBBUSY)  || (UCB0STAT & UCSCLLOW) ) {
@@ -297,7 +308,7 @@ int spi_write(const uint8_t* data, int len) {
     
     // check configuration
     if (ucb_mode != MODE_SPI) {
-        return -1;
+        spi_init();
     }
 
     if ( UCB0STAT & UCBUSY )
@@ -316,6 +327,11 @@ int spi_write(const uint8_t* data, int len) {
 
 void spi_write_single(uint8_t data) {
     
+    // check configuration
+    if (ucb_mode != MODE_SPI) {
+        spi_init();
+    }
+    
     if ( UCB0STAT & UCBUSY )
         return;
     
@@ -332,6 +348,11 @@ void spi_write_single(uint8_t data) {
 
 int spi_read(uint8_t* data, int len) {
     int i;
+    
+    // check configuration
+    if (ucb_mode != MODE_SPI) {
+        spi_init();
+    }
     
     if (UCB0STAT & UCBUSY)
         return 0;
@@ -351,6 +372,11 @@ int spi_read(uint8_t* data, int len) {
 }
 
 uint8_t spi_read_single(void) {
+    
+    // check configuration
+    if (ucb_mode != MODE_SPI) {
+        spi_init();
+    }
     
     if (UCB0STAT & UCBUSY)
         return 0;

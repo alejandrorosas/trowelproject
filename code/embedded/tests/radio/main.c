@@ -36,7 +36,7 @@ int main(void) {
   WDTCTL = WDTPW + WDTHOLD; // Stop watchdog timer
   eint();
   
-  clock_dco_set(1); // DCO 8MHz
+  clock_dco_set(8); // DCO 8MHz
   clock_mclk_set(CLOCK_SOURCE_DCO, 1); // MCLK 8MHz
   clock_smclk_set(CLOCK_SOURCE_DCO, 8); // SMCLK 1MHz
   clock_aclk_set(1);

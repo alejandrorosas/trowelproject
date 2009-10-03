@@ -2,6 +2,7 @@
 #include "csma.h"
 #include "netFD.h"
 #include "net_frames.h"
+#include "event.h"
 
 /*-----DEFINES----*/
 #ifndef NULL
@@ -9,7 +10,8 @@
 #endif
 
 /*---PROTOTYPES---*/
-static int frame_received(void);
+static int frame_received_evt(void);
+static void frame_received(void* data);
 static int handle_register_request(uint16_t from, struct frame_reg *f, int len);
 static int handle_getresp(uint16_t from, struct frame_getresp *f, int len);
 static int handle_listresp(uint16_t from, struct frame_listresp *f, int len);
@@ -96,7 +98,12 @@ int net_service_set(uint16_t node, uint8_t service_id, uint8_t param, uint8_t co
 
 
 /*---PRIVATE FUNCTIONS---*/
-static int frame_received(void) {
+static int frame_received_evt(void) {
+    event_post(frame_received, 0);
+    return 1;
+}
+ 
+static void frame_received(void* data) {
     printf("net_frame_received\n");
     union frame f;
     uint16_t from;

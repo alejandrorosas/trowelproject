@@ -2,6 +2,7 @@
 #include "csma.h"
 #include "netED.h"
 #include "net_frames.h"
+#include "event.h"
 
 /*-----DEFINES----*/
 #define STATE_UNREGISTERED 0x1
@@ -11,8 +12,10 @@
 #endif
 
 /*---PROTOTYPES---*/
-static int register_frame_received(void);
-static int frame_received(void);
+static void register_frame_received(void* data);
+static int register_frame_received_evt(void);
+static void frame_received(void* data);
+static int frame_received_evt(void);
 static int send_service_list(struct frame_list* f, int len);
 static int service_get(struct frame_get* f, int len);
 static int service_set(struct frame_set* f, int len);
@@ -76,13 +79,17 @@ void net_add_service(struct net_service *new_service) {
 }
 
 /*---PRIVATE FUNCTIONS---*/
-static int register_frame_received(void) {
+static int register_frame_received_evt(void) {
+    event_post(register_frame_received, 0);
+    return 1;
+}
+static void register_frame_received(void* data) {
     // a frame has been received, we're hoping for an ACK frame
     struct frame_ack ack;
     uint16_t from;
     
     if ( !csma_read(&from, (uint8_t*)&ack, sizeof(ack)) ) {
-        return 0;
+        return;
     }
     
     // check if frame type corresponds
@@ -95,13 +102,17 @@ static int register_frame_received(void) {
         csma_set_rx_cb(frame_received);
         // call callback
         if (register_done_cb) {
-            return register_done_cb();
+            register_done_cb();
         }
     }
-    return 0;
 }
 
 static int frame_received(void) {
+    event_post(frame_received_evt, 0);
+    return 1;
+}
+
+static void frame_received(void* data) {
     union frame f;
     uint16_t from;
     int len;
