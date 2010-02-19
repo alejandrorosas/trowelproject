@@ -1,3 +1,0 @@
-RIME_BASE      = packetbuf.c rimeaddr.c
-
-CONTIKI_SOURCEFILES += $(RIME_BASE)
