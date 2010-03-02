@@ -10,5 +10,5 @@ endif
 CONTIKI_TARGET_SOURCEFILES += $(ARCH) $(CONTIKI_TARGET_MAIN)
 
 MCU=msp430x2274
-include $(CONTIKI)/cpu/msp430/Makefile.msp430
+include $(CONTIKI)/cpu/ez430/Makefile.ez430
 
