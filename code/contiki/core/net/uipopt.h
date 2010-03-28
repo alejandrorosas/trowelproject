@@ -216,7 +216,7 @@
 
 #ifndef UIP_CONF_ND6_MAX_NEIGHBORS 
 /** Default number of neighbors that can be stored in the %neighbor cache */
-#define UIP_CONF_ND6_MAX_NEIGHBORS    4  
+#define UIP_CONF_ND6_MAX_NEIGHBORS    4
 #endif
 
 #ifndef UIP_CONF_ND6_MAX_DEFROUTERS

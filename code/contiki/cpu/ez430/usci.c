@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "spi.h"
-#include "uart.h"
+#include "dev/uart.h"
 
 #ifndef NULL
 #define NULL 0x0
@@ -131,14 +131,12 @@ void uart_writeb(uint8_t c) {
 		;
 }
 
-#ifndef WITH_SLIP /* If WITH_SLIP is defined, putchar() is defined by the SLIP driver */
 int putchar(int c) {
-	uart_writeb((char) c);
+	uart_writeb((uint8_t) c);
 	return c;
 }
-#endif /* ! WITH_UIP */
 
-int (*uart_cb)(int c) = 0x0;
+int (*uart_cb)(uint8_t c) = 0x0;
 void uart_set_input(int(*cb)(uint8_t c)) {
 	uart_cb = cb;
 }
