@@ -1,14 +1,19 @@
 # $Id: Makefile.sky,v 1.26 2009/06/26 12:00:49 joxe Exp $
 
-ARCH=msp430.c leds.c watchdog.c cc2500.c
+ARCH=msp430.c leds.c watchdog.c cc2500.c ezmac.c
 
 CONTIKI_TARGET_DIRS = . dev apps net
 ifndef CONTIKI_TARGET_MAIN
 CONTIKI_TARGET_MAIN = contiki-ez-main.c
 endif
 
+ifdef UIP_CONF_IPV6
+CFLAGS += -DWITH_UIP6=1
+endif
+
 CONTIKI_TARGET_SOURCEFILES += $(ARCH) $(CONTIKI_TARGET_MAIN)
 
 MCU=msp430x2274
+MCU=msp430x2618
 include $(CONTIKI)/cpu/ez430/Makefile.ez430
 
