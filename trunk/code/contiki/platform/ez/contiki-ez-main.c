@@ -49,10 +49,6 @@
 
 #include "sys/autostart.h"
 
-#ifdef EXPERIMENT_SETUP
-#include "experiment-setup.h"
-#endif
-
 #define MAC_DRIVER ezmac_driver
 
 extern const struct mac_driver MAC_DRIVER;
@@ -90,16 +86,12 @@ int main(int argc, char **argv) {
 	msp430_cpu_init();
 	clock_init();
 	leds_init();
+	leds_off(LEDS_ALL);
 	leds_on(LEDS_RED);
 
-	//uart1_init(BAUD2UBR(115200)); /* Must come before first printf */
 	uart_init();
 
 	leds_on(LEDS_GREEN);
-	//ds2411_init();
-
-	leds_on(LEDS_BLUE);
-
 	leds_off(LEDS_RED);
 	rtimer_init();
 	/*
@@ -109,7 +101,6 @@ int main(int argc, char **argv) {
 	/* Restore node id if such has been stored in external mem */
 	random_init((ds2411_id[0]<<8) + ds2411_id[1]);
 
-	leds_off(LEDS_BLUE);
 	/*
 	 * Initialize Contiki and our processes.
 	 */
@@ -130,6 +121,8 @@ int main(int argc, char **argv) {
 
 	print_processes(autostart_processes);
 	autostart_start(autostart_processes);
+
+	leds_on(LEDS_ALL);
 
 	/*
 	 * This is the scheduler loop.
