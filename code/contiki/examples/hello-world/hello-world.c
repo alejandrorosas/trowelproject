@@ -44,23 +44,32 @@
 
 #include "leds.h"
 /*---------------------------------------------------------------------------*/
-PROCESS(hello_world_process, "Hello world process");
+PROCESS(hello_world_process, "Hello world process")
+;
 AUTOSTART_PROCESSES(&hello_world_process);
 /*---------------------------------------------------------------------------*/
-PROCESS_THREAD(hello_world_process, ev, data)
-{
-  PROCESS_BEGIN();
+PROCESS_THREAD(hello_world_process, ev, data) {
+	PROCESS_BEGIN();
 
-  printf("Hello, world\n");
-  
-  struct etimer timer;
-  etimer_set(&timer, CLOCK_SECOND);
+		printf("Hello, world\n");
 
-  while (1) {
-	  PROCESS_WAIT_UNTIL(etimer_expired(&timer));
-	  leds_toggle(LEDS_GREEN);
-  }
+		static struct etimer timer;
+		static uint8_t leds_state = 0;
 
-  PROCESS_END();
-}
-/*---------------------------------------------------------------------------*/
+		while (1) {
+			// we set the timer from here every time
+			etimer_set(&timer, CLOCK_SECOND/4);
+			// and wait until the vent we receive is the one we're waiting for
+			PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER);
+
+			// update the LEDs
+			leds_off(LEDS_ALL);
+			leds_on(leds_state);
+			leds_state += 1;
+			printf("Hello, world %i\n", leds_state);
+
+		}
+
+		PROCESS_END();
+	}
+	/*---------------------------------------------------------------------------*/

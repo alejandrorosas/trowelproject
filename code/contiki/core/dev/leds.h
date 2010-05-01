@@ -50,45 +50,15 @@
 
 void leds_init(void);
 
-/**
- * Blink all LEDs.
- */
-void leds_blink(void);
-
-#define LEDS_GREEN  1
-#define LEDS_YELLOW 2
-#define LEDS_RED    4
-#define LEDS_BLUE   LEDS_YELLOW	/* Tmote Sky is colorblind? */
-#define leds_blue   leds_yellow
-
-#define LEDS_ALL    7
+#define LEDS_GREEN  2
+#define LEDS_RED    1
+#define LEDS_ALL    3
 
 /**
  * Returns the current status of all leds (respects invert)
  */
-unsigned char leds_get(void);
 void leds_on(unsigned char leds);
 void leds_off(unsigned char leds);
 void leds_toggle(unsigned char leds);
-void leds_invert(unsigned char leds);
-
-
-
-
-void leds_green(int onoroff);
-void leds_red(int onoroff);
-void leds_yellow(int onoroff);
-#define LEDS_ON  1
-#define LEDS_OFF 0
-
-
-
-
-/**
- * Leds implementation
- */
-void leds_arch_init(void);
-unsigned char leds_arch_get(void);
-void leds_arch_set(unsigned char leds);
 
 #endif /* __LEDS_H__ */
