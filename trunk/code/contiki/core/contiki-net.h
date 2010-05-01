@@ -37,23 +37,7 @@
 
 #include "contiki.h"
 
-#include "net/tcpip.h"
-#include "net/uip.h"
-#include "net/uip-fw.h"
-#include "net/uip-fw-drv.h"
-#include "net/uip_arp.h"
-#include "net/uiplib.h"
-#include "net/uip-udp-packet.h"
-
-#if UIP_CONF_IPV6
-#include "net/uip-icmp6.h"
-#include "net/uip-netif.h"
-#endif /* UIP_CONF_IPV6 */
-
-#include "net/resolv.h"
-
-#include "net/psock.h"
-
 #include "net/rime.h"
+#include "lib/memb.h"
 
 #endif /* __CONTIKI_NET_H__ */

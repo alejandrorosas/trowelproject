@@ -14,7 +14,7 @@ CONTIKI_CPU=$(CONTIKI)/cpu/ez430
 CONTIKI_CPU_DIRS = . dev
 
 MSP430     = msp430.c clock.c leds.c leds-arch.c \
-             watchdog.c usci.c rtimer-arch.c uip-ipchksum.c
+             watchdog.c usci.c rtimer-arch.c
 UIPDRIVERS = crc16.c
 TARGETLIBS = random.c
 

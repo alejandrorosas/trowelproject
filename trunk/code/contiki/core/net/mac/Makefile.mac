@@ -1,2 +1,1 @@
-CONTIKI_SOURCEFILES += nullmac.c frame802154.c sicslowmac.c
-CONTIKI_SOURCEFILES += framer.c framer-nullmac.c framer-802154.c
+CONTIKI_SOURCEFILES += nullmac.c framer.c framer-nullmac.c
