@@ -2,7 +2,7 @@
 
 ARCH=msp430.c leds.c watchdog.c cc2500.c ezmac.c
 
-CONTIKI_TARGET_DIRS = . dev apps net
+CONTIKI_TARGET_DIRS = . dev net
 ifndef CONTIKI_TARGET_MAIN
 CONTIKI_TARGET_MAIN = contiki-ez-main.c
 endif
@@ -14,6 +14,5 @@ endif
 CONTIKI_TARGET_SOURCEFILES += $(ARCH) $(CONTIKI_TARGET_MAIN)
 
 MCU=msp430x2274
-MCU=msp430x2618
 include $(CONTIKI)/cpu/ez430/Makefile.ez430
 
