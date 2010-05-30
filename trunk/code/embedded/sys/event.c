@@ -5,11 +5,11 @@
 #define EVENT_QUEUE_SIZE 8
 
 /* DATA */
-typedef struct {
+typedef struct event_data {
     event_t func;
     void* data;
-} event_data_t;
-static event_data_t event_queue[EVENT_QUEUE_SIZE];
+};
+static struct event_data_t event_queue[EVENT_QUEUE_SIZE];
 static int16_t queue_start, queue_len;
 
 /* FUNCTIONS */

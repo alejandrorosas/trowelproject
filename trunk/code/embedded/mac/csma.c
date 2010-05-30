@@ -1,6 +1,6 @@
 #include <io.h>
 #include <string.h>
-#include "csma.h"
+#include "mac.h"
 #include "cc2500.h"
 
 static const uint8_t csma_radio_reg[][2] = {
@@ -42,24 +42,27 @@ static const uint8_t csma_radio_reg[][2] = {
 };
 
 static void reset_rx(void);
-static int rx_cb(void);
-static int tx_cb(void);
+static int16_t rx_cb(void);
+static int16_t tx_cb(void);
+static void force_idle(void);
+static void force_calib(void);
 
-static int (*csma_rx_cb) (void);
-static int (*csma_tx_cb) (void);
 
-uint16_t csma_addr = 0x0;
+static int16_t (*mac_rx_cb)(uint8_t* data, int16_t len, uint8_t from);
+static int16_t (*mac_tx_cb)(int16_t success);
+
+uint8_t mac_addr = 0x0;
 
 static struct {
     uint8_t len;
-    uint16_t src,
-             dst;
+    uint8_t src,
+            dst;
     uint8_t msg[59];
 } rx_msg;
 
-static int rx_ready;
+static int16_t rx_ready;
 
-static inline void micro_delay(register unsigned int n) {
+static inline void micro_delay(register uint16_t n) {
     __asm__ __volatile__ (
   "1: \n"
   " dec %[n] \n"
@@ -67,8 +70,8 @@ static inline void micro_delay(register unsigned int n) {
         : [n] "+r"(n));
 }
 
-void csma_init() {
-    int i;
+void mac_init() {
+    int16_t i;
     cc2500_init((uint8_t*) csma_radio_reg, sizeof(csma_radio_reg)/2);
     
     cc2500_gdo0_int_disable();
@@ -79,22 +82,22 @@ void csma_init() {
     
     for (i=0;i<8;i++) {
         micro_delay(500);
-        csma_addr |= (cc2500_status_rssi() & 0x1);
-        csma_addr <<= 1;
+        mac_addr |= (cc2500_status_rssi() & 0x1);
+        mac_addr <<= 1;
     }
 }
 
-int csma_send(uint16_t dest_addr, uint8_t* data, int len) {
+int16_t mac_send(uint8_t* data, int16_t len, uint8_t to) {
     uint8_t tx_len, state;
     if (len > 59) {
         return 0;
     }
     cc2500_strobe_idle();
     
-    tx_len = len + 4;
+    tx_len = len + 2;
     cc2500_write_fifo(&tx_len, 1);
-    cc2500_write_fifo((uint8_t*)&csma_addr, 2);
-    cc2500_write_fifo((uint8_t*)&dest_addr, 2);
+    cc2500_write_fifo((uint8_t*)&mac_addr, 1);
+    cc2500_write_fifo((uint8_t*)&to, 1);
     cc2500_write_fifo(data, len);
     
     cc2500_gdo0_int_set_cb(tx_cb);
@@ -108,48 +111,24 @@ int csma_send(uint16_t dest_addr, uint8_t* data, int len) {
     return len;
 }
 
-int csma_read(uint16_t* from, uint8_t* data, int len) {
-    if (rx_ready == 0) {
-        return 0;
-    }
-    
-    if (rx_msg.len-4 > len) {
-        return 0;
-    }
-    
-    *from = rx_msg.src;
-    memcpy((uint8_t*)data, rx_msg.msg, rx_msg.len-4);
-    
-    rx_ready = 0;
-    
-    return rx_msg.len-4;
+void mac_set_rx_cb(int16_t (*cb) (uint8_t* data, int16_t len, uint8_t from)) {
+    mac_rx_cb = cb;
 }
 
-void csma_set_rx_cb(int (*cb) (void)) {
-    csma_rx_cb = cb;
-}
-
-void csma_set_tx_cb(int (*cb) (void)) {
-    csma_tx_cb = cb;
+void mac_set_tx_cb(int16_t (*cb) (int16_t success)) {
+    mac_tx_cb = cb;
 }
 
 static void reset_rx() {
     uint8_t state;
     state = cc2500_strobe_nop();
 
-    cc2500_strobe_idle();
-    while ( (state & CC2500_NOP_STATE_MASK) != CC2500_NOP_STATE_IDLE) {
-        state = cc2500_strobe_nop();
-    }
+    force_idle();
 
     cc2500_strobe_flush_rx();
     cc2500_strobe_flush_tx();
-    cc2500_strobe_calib();
-
-    state = cc2500_strobe_nop();
-    while ( (state & CC2500_NOP_STATE_MASK) != CC2500_NOP_STATE_IDLE) {
-        state = cc2500_strobe_nop();
-    }
+    
+    force_calib();
 
     cc2500_gdo0_int_clear();
     cc2500_gdo0_int_set_falling();
@@ -160,7 +139,7 @@ static void reset_rx() {
 }
 
 
-static int rx_cb() {
+static int16_t rx_cb() {
     if (! (cc2500_status_crclqi() & CC2500_CRC_MASK) ) {
         reset_rx();
         return 0;
@@ -168,7 +147,7 @@ static int rx_cb() {
     
     uint8_t len;
     cc2500_read_fifo(&len, 1);
-    if (len > 63) {
+    if (len > 63 || len < 2) {
         reset_rx();
         return 0;
     }
@@ -176,25 +155,46 @@ static int rx_cb() {
     rx_msg.len = len;
     
     cc2500_read_fifo((uint8_t*)&rx_msg.src, rx_msg.len);
-    rx_ready = 1;
     
     uint8_t data[2];
     cc2500_read_fifo(data, 2);
     
     reset_rx();
     
-    if (csma_rx_cb) {
-        return csma_rx_cb();
+    if (rx_msg.dst == mac_addr || rx_msg.dst == MAC_BROADCAST) {
+    
+        if (mac_rx_cb) {
+            return mac_rx_cb(rx_msg.msg, (int16_t) rx_msg.len - 2, rx_msg.src);
+        }
     }
     return 0;
 }
 
-static int tx_cb() {
+static int16_t tx_cb() {
     reset_rx();
     
-    if (csma_tx_cb) {
-        return csma_tx_cb();
+    if (mac_tx_cb) {
+        return mac_tx_cb(1);
     }
     
     return 0;
+}
+
+static void force_idle(void) {
+    switch (cc2500_strobe_nop() & CC2500_NOP_STATE_MASK) {
+        case CC2500_NOP_STATE_RXOVER:
+            cc2500_strobe_flush_rx();
+            break;
+        case CC2500_NOP_STATE_TXUNDER:
+            cc2500_strobe_flush_tx();
+            break;
+    }
+    
+    cc2500_strobe_idle();
+    do {} while ((cc2500_strobe_nop() & CC2500_NOP_STATE_MASK)!=CC2500_NOP_STATE_IDLE);
+}
+
+static void force_calib(void) {
+    cc2500_strobe_calib();
+    do {} while ((cc2500_strobe_nop() & CC2500_NOP_STATE_MASK)!=CC2500_NOP_STATE_IDLE);
 }
