@@ -9,7 +9,7 @@ void leds_init(void) {
 }
 
 void leds_set(uint16_t leds) {
-    P1OUT = (P1OUT|~LEDS_ALL) | (leds & LEDS_ALL);
+    P1OUT = (P1OUT & ~LEDS_ALL) | (leds & LEDS_ALL);
 }
 
 uint16_t leds_get(void) {
