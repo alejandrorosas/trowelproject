@@ -36,7 +36,7 @@ int main(void) {
     clock_smclk_set(CLOCK_SOURCE_DCO, 8); // SMCLK 1MHz
 
     leds_init();
-    leds_off(LEDS_ALL);
+    leds_on(LEDS_ALL);
 
     csma_init();
     csma_set_rx_cb(rx);
