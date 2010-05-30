@@ -12,6 +12,7 @@ CC              = msp430-gcc
 SRC 	= main.c first_chain.c \
 		${DRIVERS}/clock.c \
 		${DRIVERS}/leds.c \
+		${DRIVERS}/timer.c \
 		${SYS}/event.c \
 		${SYS}/state.c
 

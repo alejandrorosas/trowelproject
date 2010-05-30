@@ -1,6 +1,12 @@
 #include <io.h>
 #include "state.h"
 #include "leds.h"
+#include "timer.h"
+
+#define TIMER_SECOND 12000
+
+static int16_t eventX_cb(void);
+static int16_t eventY_cb(void);
 
 struct st_chain first_chain;
 struct st_state stateA, stateB, stateC;
@@ -47,49 +53,35 @@ void first_init() {
 
 	leds_set(0);
 
-	
-	delay = 65535;
-	do
-		(delay--);
-	while (delay != 0);
-
 	st_set_active_state(&first_chain, &stateA);
+	timer_execute_once(eventX_cb, TIMER_SECOND);
 }
 
+static int16_t eventX_cb(void) {
+	st_notify_event(&first_chain, &eventX);
+	return 1;
+}
+
+static int16_t eventY_cb(void) {
+	st_notify_event(&first_chain, &eventY);
+	return 1;
+}
 
 void A_exec(struct st_event* evt) {
 	leds_set(1);
-	
-	delay = 65535;
-	do
-		(delay--);
-	while (delay != 0);
-
-	
-	st_notify_event(&first_chain, &eventX);
+	timer_execute_once(eventX_cb, TIMER_SECOND);
 }
 
 void B_exec(struct st_event* evt) {
+	static int16_t count = 0;
 	leds_set(2);
 
+	timer_execute_once( count&1 ? eventY_cb : eventX_cb, TIMER_SECOND);
 	
-	delay = 65535;
-	do
-		(delay--);
-	while (delay != 0);
-	
-	static int16_t count = 0;
-	st_notify_event(&first_chain, count&1 ? &eventY:&eventX );
 	count ++;
 }
 
 void C_exec(struct st_event* evt) {
 	leds_set(3);
-	
-	delay = 65535;
-	do
-		(delay--);
-	while (delay != 0);
-	
-	st_notify_event(&first_chain, &eventX);
+	timer_execute_once(eventX_cb, TIMER_SECOND);
 }
