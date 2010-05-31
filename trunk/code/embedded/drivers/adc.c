@@ -2,26 +2,27 @@
 #include <signal.h>
 #include "adc.h"
 
-static adc_cb_t adc_cb = 0x0;
+static adc_cb_t adc_temp_cb = 0x0;
 
 void adc_init(void) {
-    ADC10CTL0 = ADC10SHT_2 + ADC10ON + ADC10IE; // ADC10ON, interrupt enabled
-    ADC10AE0 |= 0x01;                         // P2.0 ADC option select
+	ADC10CTL0 = SREF_VREF_AVSS | ADC10SHT_DIV64 | REFON | ADC10SR | ADC10ON | ADC10IE;
+	ADC10CTL1 = INCH_TEMP | ADC10DIV_3;
 }
 
-void adc_start(void) {
-    ADC10CTL0 |= ENC + ADC10SC;             // Sampling and conversion start
-}
 
 void adc_stop(void) {
-    
+	ADC10CTL0 = 0;
 }
-void adc_register_callback(adc_cb_t cb) {
-    adc_cb = cb;
+
+void adc_sample_temp(adc_cb_t cb) {
+	ADC10CTL0 |= ENC + ADC10SC;
+	adc_cb = cb;
 }
 
 void adc10irq(void);
 interrupt (ADC10_VECTOR) adc10irq(void) {
-    if ( (adc_cb!=0x0) && adc_cb(ADC10MEM))
-        LPM4_EXIT;
+	if ( (adc_temp_cb!=0x0) && adc_temp_cb(ADC10MEM))
+		LPM4_EXIT;
+
+	adc_temp_cb = 0x0;
 }
