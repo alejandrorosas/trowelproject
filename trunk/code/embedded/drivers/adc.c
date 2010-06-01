@@ -16,7 +16,7 @@ void adc_stop(void) {
 
 void adc_sample_temp(adc_cb_t cb) {
 	ADC10CTL0 |= ENC + ADC10SC;
-	adc_cb = cb;
+	adc_temp_cb = cb;
 }
 
 void adc10irq(void);

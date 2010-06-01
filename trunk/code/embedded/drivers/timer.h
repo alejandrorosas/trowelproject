@@ -25,7 +25,7 @@ uint16_t timer_time(void);
 uint16_t timer_mastertime(void);
 
 int16_t timer_execute_once(timer_cb function, uint16_t wait);
-int16_t timer_execute_several(timer_cb function, uint16_t period, uint16_t count);
+int16_t timer_execute_several(timer_cb function, uint16_t period, int16_t count);
 
 int16_t timer_cancel_execute(int16_t id);
 

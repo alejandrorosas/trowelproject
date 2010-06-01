@@ -149,7 +149,7 @@ void port2irq(void);
  * Used for handling CC2500 interrupts triggered on
  * the GDOx pins.
  */
-interrupt(PORT2_VECTOR) port1irq(void) {
+interrupt(PORT2_VECTOR) port2irq(void) {
   if (P2IFG & BV(GDO0_PIN)) {
     P2IFG &= ~BV(GDO0_PIN);
     if (gdo0_cb != 0x0) {

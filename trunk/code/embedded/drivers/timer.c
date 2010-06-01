@@ -111,7 +111,7 @@ int16_t timer_execute_once(timer_cb function, uint16_t wait) {
 	return 0;
 }
 
-int16_t timer_execute_several(timer_cb function, uint16_t period, uint16_t count) {
+int16_t timer_execute_several(timer_cb function, uint16_t period, int16_t count) {
 	int16_t alarm_id;
 	uint16_t now;
 	now = TAR;
