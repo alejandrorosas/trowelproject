@@ -1,16 +1,13 @@
 #include <io.h>
 #include <signal.h>
 #include "clock.h"
-#include "timer.h"
 #include "leds.h"
-#include "adc.h"
+#include "button.h"
 
-static int data_ready(uint16_t value);
-static int launch_adc();
+static int click();
 
 int main(void) {
 	WDTCTL = WDTPW + WDTHOLD;				 // Stop WDT
-	eint();
 	
 	clock_dco_set(8); // DCO @ 8MHz
 	clock_mclk_set(CLOCK_SOURCE_DCO, 1); // MCLK @ 8MHz
@@ -18,25 +15,23 @@ int main(void) {
 	clock_aclk_set(1); // ACLK @ 12kHz
 
 	leds_init();
-	leds_off(LEDS_ALL);
+	leds_on(LEDS_ALL);
 
-	adc_init();
-	timer_init();
-	timer_start(ACLK, 1);
-	timer_execute_several(launch_adc, 12000, -1);
+	button_init(HIGH_TO_LOW, click);
+	eint();
 
-	while (1) LPM0;
-
+	
+	while (1) {
+		if (P1IN & 0x4) {
+			leds_on(LED_RED);
+		} else {
+			leds_off(LED_RED);
+		}
+	}
 	return 0;
 }
 
-static int data_ready(uint16_t value) {
+static int click() {
 	leds_toggle(LED_GREEN);
-	return 0;
-}
-
-static int launch_adc(void) {
-	leds_toggle(LED_RED);
-	adc_sample_temp(data_ready);
 	return 0;
 }

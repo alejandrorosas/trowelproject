@@ -5,11 +5,12 @@ void leds_init(void) {
     P1SEL &= ~LEDS_ALL;
     P1REN &= ~LEDS_ALL;
     P1DIR |= LED_RED | LED_GREEN;
-    P1OUT = (P1OUT|~LEDS_ALL);
+    P1OUT &= ~LEDS_ALL;
 }
 
 void leds_set(uint16_t leds) {
-    P1OUT = (P1OUT & ~LEDS_ALL) | (leds & LEDS_ALL);
+    P1OUT &= ~LEDS_ALL;
+    P1OUT |= leds & LEDS_ALL;
 }
 
 uint16_t leds_get(void) {
