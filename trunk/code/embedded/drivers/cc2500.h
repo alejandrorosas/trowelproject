@@ -6,6 +6,8 @@
  * ------------------------------------------------------------------------------------------------
  */
 
+#define CC2500_XOSC_FREQ 26000000U
+
 /* configuration registers */
 #define CC2500_REG_IOCFG2       0x00      /*  IOCFG2   - GDO2 output pin configuration  */
 #define CC2500_REG_IOCFG1       0x01      /*  IOCFG1   - GDO1 output pin configuration  */

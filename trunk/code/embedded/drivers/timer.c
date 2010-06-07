@@ -7,8 +7,8 @@
 static int16_t get_available_slot();
 
 struct timer_alarm {
-	int8_t active, period_count;
-	int16_t period;
+	uint16_t active, period_count;
+	uint16_t period;
 	timer_cb function;
 };
 
@@ -111,7 +111,7 @@ int16_t timer_execute_once(timer_cb function, uint16_t wait) {
 	return 0;
 }
 
-int16_t timer_execute_several(timer_cb function, uint16_t period, int16_t count) {
+int16_t timer_execute_several(timer_cb function, uint16_t period, uint16_t count) {
 	int16_t alarm_id;
 	uint16_t now;
 	now = TAR;
@@ -169,7 +169,7 @@ interrupt (TIMERA0_VECTOR) timer0irq( void ) {
 		timer_alarms[0].active = 0;
 	}
 
-	if (timer_alarms[0].period_count > 0) {
+	if (timer_alarms[0].period_count != TIMER_COUNT_INFINITE) {
 		timer_alarms[0].period_count--;
 	}
 	
@@ -194,7 +194,7 @@ interrupt (TIMERA1_VECTOR) timer1irq( void ) {
 			timer_alarms[alarm].active = 0;
 		}
 
-		if (timer_alarms[alarm].period_count > 0) {
+		if (timer_alarms[alarm].period_count != TIMER_COUNT_INFINITE) {
 			timer_alarms[alarm].period_count--;
 		}
 		
