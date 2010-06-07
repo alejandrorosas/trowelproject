@@ -17,6 +17,6 @@ int spi_read(uint8_t* data, int len);
 uint8_t spi_read_single(void);
 int spi_read_interrupt(uint8_t* data, int len, spi_transfer_done_cb_t cb);
 
-#define spi_read_somi() (P3IN & BV(2)))
+#define SPI_SOMI (P3IN & BV(2))
 
 #endif

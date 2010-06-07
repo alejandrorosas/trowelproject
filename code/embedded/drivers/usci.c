@@ -277,7 +277,7 @@ void spi_init_io(void) {
 	// configure P3.0 IO for radio CSn
 	P3SEL &= ~1; // set IO
 	P3DIR |= 1; // set output
-	spi_radio_deselect();
+	spi_deselect_radio();
 
 	spi_io_inited = 1;
 }
@@ -455,7 +455,6 @@ interrupt (USCIAB0RX_VECTOR) uscirx_irq(void) {
 }
 
 interrupt (USCIAB0TX_VECTOR) uscitx_irq(void) {
-	char dummy;
 	if (IFG2 & UCA0TXIFG) {
 		// UCA TX ready (uart)
 	}

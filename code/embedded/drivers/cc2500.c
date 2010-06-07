@@ -3,7 +3,6 @@
 
 #include "spi.h"
 #include "cc2500.h"
-//#include "cc2500_smartrf.h"
 
 #define GDO0_PIN 6
 #define GDO2_PIN 7
@@ -31,25 +30,25 @@ void cc2500_init(uint8_t* init_cfg, int len) {
   spi_init();
   
   /* radio reset sequence */
-  spi_radio_select();
+  spi_select_radio();
   micro_delay(10);
-  spi_radio_deselect();
+  spi_deselect_radio();
 
   /* hold CSn high for at least 40 microseconds */
   micro_delay(100);
   
   /* pull CSn low and wait for SO to go low */
-  spi_radio_select();
-  while (spi_read_somi());
+  spi_select_radio();
+  while ( SPI_SOMI );
 
   /* directly send strobe command - cannot use function as it affects CSn pin */
   spi_write_single(CC2500_STROBE_SRES);
 
   /* wait for SO to go low again, reset is complete at that point */
-  while (spi_read_somi());
+  while ( SPI_SOMI );
 
   /* return CSn pin to its default high level */
-  spi_radio_deselect();
+  spi_deselect_radio();
   
   /* verify that SPI is working */
 #define TEST_VALUE 0xA5
@@ -84,9 +83,9 @@ uint8_t cc2500_cmd_strobe(uint8_t addr) {
   if (addr < 0x30 || addr > 0x3D) {
     while(1);
   }
-  spi_radio_select();
+  spi_select_radio();
   spi_write_single(addr);
-  spi_radio_deselect();
+  spi_deselect_radio();
   
   return spi_last_read;
 }
@@ -97,10 +96,10 @@ uint8_t cc2500_read_reg(uint8_t addr) {
     while(1);
   }
   
-  spi_radio_select();
+  spi_select_radio();
   spi_write_single(addr | BURST_BIT | READ_BIT);
   ret_val = spi_read_single();
-  spi_radio_deselect();
+  spi_deselect_radio();
   
   return ret_val;
 }
@@ -110,29 +109,29 @@ void cc2500_write_reg(uint8_t addr, uint8_t value) {
     while(1);
   }
   
-  spi_radio_select();
+  spi_select_radio();
   spi_write_single(addr);
   spi_write_single(value);
-  spi_radio_deselect();
+  spi_deselect_radio();
   
 }
 
 void cc2500_write_fifo(uint8_t * pWriteData, uint8_t len) {
-  spi_radio_select();
+  spi_select_radio();
   spi_write_single(CC2500_REG_TXFIFO | BURST_BIT);
   spi_write(pWriteData, len);
-  spi_radio_deselect();
+  spi_deselect_radio();
 }
 
 void cc2500_read_fifo(uint8_t * pReadData, uint8_t len) {
   int i;
-  spi_radio_select();
+  spi_select_radio();
   spi_write_single(CC2500_REG_RXFIFO | BURST_BIT | READ_BIT);
   for (i=0; i<len; i++) {
     pReadData[i] = spi_read_single();
   }
   //~ spi_read(pReadData, len);
-  spi_radio_deselect();
+  spi_deselect_radio();
 }
 
 
