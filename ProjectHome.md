@@ -1,0 +1,1 @@
+The trowel project aims at equipping a dancer with wireless sensors design to capture his/her movement. From this measurement, light and sound can be produced dynamically and in response to his/her actions.
